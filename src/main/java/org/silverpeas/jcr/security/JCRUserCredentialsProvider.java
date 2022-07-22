@@ -40,11 +40,28 @@ public final class JCRUserCredentialsProvider {
    */
   public static final String JCR_SYSTEM_ID = "jcr-system@domain0";
 
+  private JCRUserCredentialsProvider() {
+
+  }
+
   /**
    * Gets the credentials of the JCR system user in Silverpeas.
    * @return the simple credentials corresponding to the JCR system user.
    */
   public static Credentials getJcrSystemCredentials() {
     return new SimpleCredentials(JCR_SYSTEM_ID, new char[0]);
+  }
+
+  /**
+   * Gets the credentials of a user in Silverpeas to authenticate him against the JCR.
+   * @param login the login the user uses to authenticate him usually in Silverpeas.
+   * @param domainId the unique identifier of the user domain in which the user belongs.
+   * @param password the password the user uses to authenticate him usually in Silverpeas.
+   * @return the simple credentials corresponding to the given user in Silverpeas.
+   */
+  public static Credentials getUserCredentials(final String login, final String domainId,
+      final String password) {
+    return new SimpleCredentials(login + "@domain" + domainId,
+        password.toCharArray());
   }
 }

@@ -21,19 +21,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.silverpeas.jcr.security.oak;
+package org.silverpeas.jcr.impl.oak.security;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.jackrabbit.oak.spi.security.ConfigurationParameters;
 import org.apache.jackrabbit.oak.spi.security.SecurityConfiguration;
 import org.apache.jackrabbit.oak.spi.security.SecurityProvider;
 import org.apache.jackrabbit.oak.spi.security.authentication.AuthenticationConfiguration;
-import org.apache.jackrabbit.oak.spi.security.authentication.OpenAuthenticationConfiguration;
 import org.apache.jackrabbit.oak.spi.security.authorization.AuthorizationConfiguration;
-import org.apache.jackrabbit.oak.spi.security.authorization.OpenAuthorizationConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -54,19 +51,22 @@ import java.util.List;
 public class SilverpeasSecurityProvider implements SecurityProvider {
 
   @Override
-  public @NotNull ConfigurationParameters getParameters(@Nullable final String name) {
+  @Nonnull
+  public ConfigurationParameters getParameters(@Nullable final String name) {
     return ConfigurationParameters.EMPTY;
   }
 
   @Override
-  public @NotNull Iterable<? extends SecurityConfiguration> getConfigurations() {
+  @Nonnull
+  public Iterable<? extends SecurityConfiguration> getConfigurations() {
     return List.of(new SilverpeasAuthenticationConfiguration(),
         new SilverpeasAuthorizationConfiguration());
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> @NotNull T getConfiguration(@NotNull final Class<T> configClass) {
+  @Nonnull
+  public <T> T getConfiguration(@Nonnull final Class<T> configClass) {
     if (AuthenticationConfiguration.class == configClass) {
       return (T) new SilverpeasAuthenticationConfiguration();
     } else if (AuthorizationConfiguration.class == configClass) {

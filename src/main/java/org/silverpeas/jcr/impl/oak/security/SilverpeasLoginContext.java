@@ -22,7 +22,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.jcr.security.oak;
+package org.silverpeas.jcr.impl.oak.security;
 
 import org.apache.jackrabbit.oak.spi.security.authentication.LoginContext;
 import org.silverpeas.jcr.security.LoginModuleRegistry;
@@ -31,7 +31,6 @@ import javax.jcr.Credentials;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

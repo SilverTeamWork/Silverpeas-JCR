@@ -11,7 +11,7 @@
  * Open Source Software ("FLOSS") applications as described in Silverpeas's
  * FLOSS exception.  You should have received a copy of the text describing
  * the FLOSS exception, and it is also available here:
- * "http://www.silverpeas.org/legal/licensing"
+ * "https://www.silverpeas.org/legal/licensing"
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,21 +23,71 @@
  */
 package org.silverpeas.jcr;
 
+import org.silverpeas.core.SilverpeasRuntimeException;
 import org.silverpeas.core.annotation.Provider;
+import org.silverpeas.core.util.ServiceProvider;
+import org.silverpeas.jcr.impl.RepositorySettings;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Produces;
 import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.RepositoryFactory;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.function.Function;
 
 /**
- * A provider of a Java Content Repository instance.
+ * A provider of JCR instances. It aims to provide, through the IoC mechanism, the
+ * {@link javax.jcr.Repository} object through which Silverpeas access the JCR. For doing, the
+ * {@link org.silverpeas.jcr.RepositoryProvider} instance delegates the getting of such a repository
+ * to a {@link javax.jcr.RepositoryFactory} object it gets through the Java Service Provider
+ * interface. So, and because it could have more than one such a factory, it selects the correct one
+ * by passing some parameters the factory implementation has to understand and to satisfy in order
+ * to create the corresponding {@link javax.jcr.Repository}. The parameters and defined in a
+ * {@link RepositorySettings} instance.
  * @author mmoquillon
  */
 @Provider
 public class RepositoryProvider {
 
-  @Produces
-  public Repository getRepository() {
-    return null;
+  private SilverpeasContentRepository repository;
+
+  /**
+   * Gets an instance of the {@link RepositoryProvider}.
+   * @return a {@link RepositoryProvider} instance.
+   */
+  public static RepositoryProvider get() {
+    return ServiceProvider.getSingleton(RepositoryProvider.class);
   }
 
+  @PostConstruct
+  private void initRepository() {
+    RepositorySettings settings = new RepositorySettings();
+    Map<String, String> parameters = new HashMap<>();
+    parameters.put(RepositorySettings.JCR_HOME, settings.getJCRHomeDirectory());
+    parameters.put(RepositorySettings.JCR_CONF, settings.getJCRConfigurationFile());
+
+    Function<RepositoryFactory, Repository> getRepository = f -> {
+      try {
+        return f.getRepository(parameters);
+      } catch (RepositoryException e) {
+        throw new SilverpeasRuntimeException(e);
+      }
+    };
+    Repository jcr = ServiceLoader.load(RepositoryFactory.class).stream()
+        .map(ServiceLoader.Provider::get)
+        .map(getRepository)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElseThrow(() -> new SilverpeasRuntimeException("No JCR backend found!"));
+    repository = new SilverpeasContentRepository(jcr);
+  }
+
+  @Produces
+  public SilverpeasContentRepository getRepository() {
+    return repository;
+  }
 }

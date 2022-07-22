@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2022 Silverpeas
+ * Copyright (C) 2000 - 2022 Silverpeas
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -11,7 +11,7 @@
  * Open Source Software ("FLOSS") applications as described in Silverpeas's
  * FLOSS exception.  You should have received a copy of the text describing
  * the FLOSS exception, and it is also available here:
- * "https://www.silverpeas.org/legal/floss_exception.html"
+ * "https://www.silverpeas.org/legal/licensing"
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,15 +23,15 @@
  */
 
 /**
- * Provides the classes required by the implementation of the JCR when a user in Silverpeas is
- * accessing the repository in order to delegate both the authentication and the authorization to
- * the Silverpeas security mechanism. The expectation of the JCR API is the users and the groups of
- * users should be managed within the JCR repository so that the authentication and the
- * authorization can be performed automatically by the JCR itself when a user accesses the content
- * of the repository. But the users and the groups of users are managed by Silverpeas itself and out
- * of the JCR which is used only to store some data, and they don't need to be synchronized with the
- * repository to both avoid double security checkups and to keep the accesses strongly controlled by
- * Silverpeas.
+ * Provides the classes defining the different configuration parameters to create and initialize a
+ * JCR in Oak. These classes are serializable and are instantiated when loading the JCR
+ * configuration file. They are an alternative way to the OSGi configuration adopted by Oak. Indeed,
+ * Oak provides only two ways to create a repository: either programmatically by using builders or
+ * by OSGi with a dedicated configuration file. Nevertheless, a non-OSGi application can use the Oak
+ * OSGi configuration but this requires to load a lot of dependencies on OSGi and on its
+ * implementation which aren't needed by the application itself. So, this package is a way to
+ * provide a classic and a conventional way to configure a repository through a configuration file
+ * out of an OSGi environment by using transparently the programmatic way with the builders.
  * @author mmoquillon
  */
-package org.silverpeas.jcr.security;
+package org.silverpeas.jcr.impl.oak.configuration;

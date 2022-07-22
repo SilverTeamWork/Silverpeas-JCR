@@ -24,18 +24,18 @@
 
 package org.silverpeas.jcr.security;
 
-import org.apache.jackrabbit.oak.spi.security.authentication.AbstractLoginModule;
-import org.jetbrains.annotations.NotNull;
+import org.silverpeas.core.admin.user.model.User;
 import org.silverpeas.core.i18n.I18n;
 import org.silverpeas.core.security.authentication.Authentication;
 import org.silverpeas.core.security.authentication.AuthenticationCredential;
 import org.silverpeas.core.security.authentication.AuthenticationResponse;
+import org.silverpeas.core.security.authentication.exception.AuthenticationException;
 import org.silverpeas.core.util.StringUtil;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.login.LoginException;
-import java.security.Principal;
 import java.util.Set;
 
 /**
@@ -48,69 +48,34 @@ import java.util.Set;
  * </p>
  * @author mmoquillon
  */
-public class SilverpeasSimpleJCRLoginModule extends AbstractLoginModule {
+public class SilverpeasSimpleJCRLoginModule extends SilverpeasJCRLoginModule {
 
-  private Credentials credentials = null;
-  private Principal principal = null;
-
+  @SuppressWarnings("rawtypes")
   @Override
-  protected @NotNull Set<Class> getSupportedCredentials() {
+  @Nonnull
+  protected Set<Class> getSupportedCredentials() {
     return Set.of(SimpleCredentials.class);
   }
 
   @Override
-  public boolean login() throws LoginException {
-    try {
-      // Get credentials using a JAAS callback
-      credentials = getCredentials();
-      if (credentials instanceof SimpleCredentials) {
-        // Use the credentials to authenticate the subject and then to get its principal to access
-        // the JCR repository
-        principal = null;
-
-        Authentication auth = Authentication.get();
-        AuthenticationCredential cred = convert((SimpleCredentials) credentials);
-        AuthenticationResponse resp = auth.authenticate(cred);
-        if (resp.getStatus().succeeded()) {
-          /* get the user from the authentication response and then build the principal */
-          //principal = new SilverpeasUserPrincipal()
-        } else {
-          throw new LoginException(resp.getStatus().getMessage(I18n.get().getDefaultLanguage()));
-        }
-
-        return principal != null;
+  protected User authenticateUser(final Credentials credentials) throws LoginException {
+    Authentication auth = Authentication.get();
+    AuthenticationCredential cred = convert((SimpleCredentials) credentials);
+    AuthenticationResponse resp = auth.authenticate(cred);
+    if (resp.getStatus().succeeded()) {
+      try {
+        /* get the user from the authentication response and then build the principal */
+        String authToken = resp.getToken();
+        return auth.getUserByAuthToken(authToken);
+      } catch (AuthenticationException e) {
+        throw new LoginException(e.getMessage());
       }
-
-      return false;
-
-    } catch (Exception ex) {
-      throw new LoginException(ex.getMessage());
+    } else {
+      throw new LoginException(resp.getStatus().getMessage(I18n.get().getDefaultLanguage()));
     }
   }
 
-  @Override
-  public boolean commit() throws LoginException {
-    if (principal != null) {
-      subject.getPrincipals().add(principal);
-      if (credentials != null) {
-        subject.getPrivateCredentials().add(credentials);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  @Override
-  public boolean logout() throws LoginException {
-    if (credentials != null &&  principal != null) {
-      subject.getPrivateCredentials().remove(credentials);
-      subject.getPrincipals().remove(principal);
-      return true;
-    }
-    return false;
-  }
-
-  @NotNull
+  @Nonnull
   private AuthenticationCredential convert(final SimpleCredentials credentials) throws LoginException {
     String userId = credentials.getUserID();
     if (StringUtil.isNotDefined(userId)) {

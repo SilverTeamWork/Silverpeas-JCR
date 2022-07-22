@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2022 Silverpeas
+ * Copyright (C) 2000 - 2022 Silverpeas
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -11,7 +11,7 @@
  * Open Source Software ("FLOSS") applications as described in Silverpeas's
  * FLOSS exception.  You should have received a copy of the text describing
  * the FLOSS exception, and it is also available here:
- * "https://www.silverpeas.org/legal/floss_exception.html"
+ * "https://www.silverpeas.org/legal/licensing"
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,15 +23,13 @@
  */
 
 /**
- * Provides the classes required by the implementation of the JCR when a user in Silverpeas is
- * accessing the repository in order to delegate both the authentication and the authorization to
- * the Silverpeas security mechanism. The expectation of the JCR API is the users and the groups of
- * users should be managed within the JCR repository so that the authentication and the
- * authorization can be performed automatically by the JCR itself when a user accesses the content
- * of the repository. But the users and the groups of users are managed by Silverpeas itself and out
- * of the JCR which is used only to store some data, and they don't need to be synchronized with the
- * repository to both avoid double security checkups and to keep the accesses strongly controlled by
- * Silverpeas.
+ * The JCR implementation is provided by the Apache Jackrabbit Oak project. The classes defined here
+ * are for putting a bridge between the Silverpeas world and the Oak one so that Oak can access the
+ * resources it requires from Silverpeas and Silverpeas can initialize and use transparently the JCR
+ * backed by Oak. The {@link javax.jcr.Repository} is provided to Silverpeas by the
+ * {@link org.silverpeas.jcr.impl.oak.OakRepositoryFactory} factory that has the knowledge to create
+ * a repository backed by Oak and that is initialized with some peculiar Silverpeas objects to allow
+ * Oak to access the context of Silverpeas (mainly for authentication and for authorization).
  * @author mmoquillon
  */
-package org.silverpeas.jcr.security;
+package org.silverpeas.jcr.impl.oak;

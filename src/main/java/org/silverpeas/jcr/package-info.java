@@ -23,8 +23,22 @@
  */
 
 /**
- * Provides the objects that wrap the specific implementation of the JCR for Silverpeas use.
- *
+ * <p>
+ * The JCR (Java Content Repository) provides a tree-based approach to store data with support of
+ * metadata, versioning, and WebDAV access. This package provides the classes that wrap the specific
+ * implementation of the JCR for Silverpeas use. All the mechanisms used to put a bridge between the
+ * JCR backend and Silverpeas are defined in the subpackages.
+ * </p>
+ * <p>
+ * The {@link org.silverpeas.jcr.RepositoryProvider} instance aims to provide, with the IoC
+ * mechanism, the {@link javax.jcr.Repository} object through which Silverpeas access the JCR. The
+ * implementation of the {@link javax.jcr.Repository} is provided by the underlying JCR backend. For
+ * doing, the {@link org.silverpeas.jcr.RepositoryProvider} instance delegates the getting of such a
+ * repository to a {@link javax.jcr.RepositoryFactory} object gotten through the Java Service
+ * Provider interface (as specified in the JCR API). This factory has to be defined by the bridge
+ * between Silverpeas and a given JCR backend and it must satisfy some settings defined in
+ * {@link org.silverpeas.jcr.impl.RepositorySettings} object.
+ * </p>
  * @author mmoquillon
  */
 package org.silverpeas.jcr;

@@ -21,18 +21,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.silverpeas.jcr.security.oak;
+package org.silverpeas.jcr.impl.oak.security;
 
 import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
 import org.apache.jackrabbit.oak.api.ContentRepository;
-import org.apache.jackrabbit.oak.spi.security.ConfigurationBase;
 import org.apache.jackrabbit.oak.spi.security.SecurityConfiguration;
-import org.apache.jackrabbit.oak.spi.security.SecurityProvider;
 import org.apache.jackrabbit.oak.spi.security.authentication.AuthenticationConfiguration;
 import org.apache.jackrabbit.oak.spi.security.authentication.LoginContextProvider;
-import org.apache.jackrabbit.oak.spi.security.user.UserIdCredentials;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.Subject;
 
@@ -47,8 +44,9 @@ public class SilverpeasAuthenticationConfiguration extends SecurityConfiguration
     implements AuthenticationConfiguration {
 
   @Override
-  public @NotNull LoginContextProvider getLoginContextProvider(
-      @NotNull final ContentRepository contentRepository) {
+  @Nonnull
+  public LoginContextProvider getLoginContextProvider(
+      @Nonnull final ContentRepository contentRepository) {
     return (credentials, workspaceName) -> {
       Subject subject = new Subject();
       if (credentials != null) {
@@ -66,7 +64,8 @@ public class SilverpeasAuthenticationConfiguration extends SecurityConfiguration
   }
 
   @Override
-  public @NotNull String getName() {
+  @Nonnull
+  public String getName() {
     return NAME;
   }
 

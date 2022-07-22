@@ -44,7 +44,17 @@ import java.util.stream.Collectors;
 /**
  * Registry of all {@link javax.security.auth.spi.LoginModule} instances to use when authenticating
  * a user accessing the JCR. These {@link LoginModule} must be a bridge in the security system
- * between the JCR implementation and Silverpeas.
+ * between the JCR implementation and Silverpeas. By default, the following {@link LoginModule}s are
+ * registered:
+ * <ul>
+ *   <li>{@link SilverpeasSimpleJCRLoginModule} to take in charge the authentication of a user
+ *   in Silverpeas by a {@link javax.jcr.SimpleCredentials} in which the user login and
+ *   the user password are provided.</li>
+ *   <li>{@link SilverpeasTokenJCRLoginModule} to take in charge the authentication of a user in
+ *   Silverpeas by a
+ *   {@link org.apache.jackrabbit.api.security.authentication.token.TokenCredentials} in which
+ *   the API token of the user is provided.</li>
+ * </ul>
  * @author mmoquillon
  */
 public class LoginModuleRegistry {
@@ -55,7 +65,11 @@ public class LoginModuleRegistry {
       new HashMap<>();
 
   private LoginModuleRegistry() {
+    new SilverpeasSimpleJCRLoginModule().getSupportedCredentials()
+        .forEach(c -> addLoginModule(c, SilverpeasSimpleJCRLoginModule.class));
 
+    new SilverpeasTokenJCRLoginModule().getSupportedCredentials()
+        .forEach(c -> addLoginModule(c, SilverpeasSimpleJCRLoginModule.class));
   }
 
   /**

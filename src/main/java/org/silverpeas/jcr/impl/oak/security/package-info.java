@@ -23,15 +23,15 @@
  */
 
 /**
- * Provides the classes required by the implementation of the JCR when a user in Silverpeas is
- * accessing the repository in order to delegate both the authentication and the authorization to
- * the Silverpeas security mechanism. The expectation of the JCR API is the users and the groups of
- * users should be managed within the JCR repository so that the authentication and the
- * authorization can be performed automatically by the JCR itself when a user accesses the content
- * of the repository. But the users and the groups of users are managed by Silverpeas itself and out
- * of the JCR which is used only to store some data, and they don't need to be synchronized with the
- * repository to both avoid double security checkups and to keep the accesses strongly controlled by
- * Silverpeas.
+ * The implementation of the JCR is provided by Apache Jackrabbit Oak. It expects, like any other
+ * JCR implementations, the users and the groups of users are managed within the JCR. But those are
+ * managed directly by Silverpeas itself. In the case they are managed externally, Oak expects a
+ * synchronization of them with the repository, and it is what we don't want here to avoid user
+ * management duplication, even for satisfying any specific authentication and authorization
+ * process. Nevertheless, custom authentication and authorization mechanisms can be plugged into
+ * Oak, but they have to be based upon JAAS and the security system of Silverpeas isn't built upon
+ * JAAS. So this package provides the components required by Oak to authenticate and to authorize a
+ * user but in bypassing all of this security mechanism in Oak.
  * @author mmoquillon
  */
-package org.silverpeas.jcr.security;
+package org.silverpeas.jcr.impl.oak.security;

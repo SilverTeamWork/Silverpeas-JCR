@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2022 Silverpeas
+ * Copyright (C) 2000 - 2022 Silverpeas
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -11,7 +11,7 @@
  * Open Source Software ("FLOSS") applications as described in Silverpeas's
  * FLOSS exception.  You should have received a copy of the text describing
  * the FLOSS exception, and it is also available here:
- * "https://www.silverpeas.org/legal/floss_exception.html"
+ * "https://www.silverpeas.org/legal/licensing"
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,16 +22,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+package org.silverpeas.jcr.impl.oak.factories;
+
+import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore;
+import org.apache.jackrabbit.oak.spi.state.NodeStore;
+import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
+
 /**
- * The implementation of the JCR is provided by Apache Jackrabbit Oak. It expects, like any other
- * JCR implementations, the users and the groups of users are managed within the JCR. But those are
- * managed directly by Silverpeas itself. In the case they are managed externally, Oak expects a
- * synchronization of them with the repository, and it is what we don't want here to avoid user
- * management duplication, even for satisfying any specific authentication and authorization
- * process. Nevertheless, custom authentication and authorization mechanisms can be plugged into
- * Oak, but they have to be based upon JAAS and the security system of Silverpeas isn't built upon
- * JAAS. So this package provides the components required by Oak to authenticate and to authorize a
- * user but in bypassing all of this security mechanism in Oak.
+ * Factory of a {@link MemoryNodeStore} instance. This is for the memory storage in Oak for testing
+ * purpose.
  * @author mmoquillon
  */
-package org.silverpeas.jcr.security.oak;
+public class MemoryNodeStoreFactory implements NodeStoreFactory {
+
+  @Override
+  public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
+    return new MemoryNodeStore();
+  }
+}

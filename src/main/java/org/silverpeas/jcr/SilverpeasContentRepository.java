@@ -25,6 +25,7 @@
 package org.silverpeas.jcr;
 
 import javax.jcr.Credentials;
+import javax.jcr.GuestCredentials;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
@@ -88,22 +89,22 @@ public class SilverpeasContentRepository implements Repository {
   @Override
   public JCRSession login(final Credentials credentials, final String workspaceName)
       throws RepositoryException {
-    return JCRSession.open(() -> repository.login(credentials, workspaceName));
+    return JCRSession.open(credentials, c -> repository.login(c, workspaceName));
   }
 
   @Override
   public JCRSession login(final Credentials credentials) throws RepositoryException {
-    return JCRSession.open(() -> repository.login(credentials));
+    return JCRSession.open(credentials, repository::login);
   }
 
   @Override
   public JCRSession login(final String workspaceName)
       throws RepositoryException {
-    return JCRSession.open(() -> repository.login(workspaceName));
+    return JCRSession.open(new GuestCredentials(), c -> repository.login(workspaceName));
   }
 
   @Override
   public JCRSession login() throws RepositoryException {
-    return JCRSession.open(repository::login);
+    return JCRSession.open(new GuestCredentials(), c -> repository.login());
   }
 }

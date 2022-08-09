@@ -25,11 +25,14 @@
 package org.silverpeas.jcr.security;
 
 import org.silverpeas.core.SilverpeasRuntimeException;
+import org.silverpeas.core.cache.model.SimpleCache;
+import org.silverpeas.core.cache.service.CacheServiceProvider;
 
 import javax.jcr.Credentials;
 import javax.security.auth.spi.LoginModule;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -44,8 +47,9 @@ import java.util.stream.Collectors;
 /**
  * Registry of all {@link javax.security.auth.spi.LoginModule} instances to use when authenticating
  * a user accessing the JCR. These {@link LoginModule} must be a bridge in the security system
- * between the JCR implementation and Silverpeas. By default, the following {@link LoginModule}s are
- * registered:
+ * between the JCR implementation and Silverpeas and as such they should extend the
+ * {@link SilverpeasJCRLoginModule} abstract class. By default, the following {@link LoginModule}s
+ * are registered:
  * <ul>
  *   <li>{@link SilverpeasSimpleJCRLoginModule} to take in charge the authentication of a user
  *   in Silverpeas by a {@link javax.jcr.SimpleCredentials} in which the user login and
@@ -60,16 +64,16 @@ import java.util.stream.Collectors;
 public class LoginModuleRegistry {
 
   private static final LoginModuleRegistry instance = new LoginModuleRegistry();
+  private final Map<Class<? extends Credentials>, List<Supplier<SilverpeasJCRLoginModule>>>
+      registry = new HashMap<>();
 
-  private final Map<Class<? extends Credentials>, List<Supplier<LoginModule>>> registry =
-      new HashMap<>();
-
+  @SuppressWarnings("unchecked")
   private LoginModuleRegistry() {
     new SilverpeasSimpleJCRLoginModule().getSupportedCredentials()
         .forEach(c -> addLoginModule(c, SilverpeasSimpleJCRLoginModule.class));
 
     new SilverpeasTokenJCRLoginModule().getSupportedCredentials()
-        .forEach(c -> addLoginModule(c, SilverpeasSimpleJCRLoginModule.class));
+        .forEach(c -> addLoginModule(c, SilverpeasTokenJCRLoginModule.class));
   }
 
   /**
@@ -84,43 +88,54 @@ public class LoginModuleRegistry {
    * Adds the specified {@link LoginModule} class as a processor of any instances of the given
    * credentials type.
    * @param credentialsType a concrete type of {@link Credentials}.
-   * @param module a {@link LoginModule} class that will be instantiated on demand to perform an
-   * authentication operation.
+   * @param module a {@link SilverpeasJCRLoginModule} class that will be instantiated on demand to
+   * perform an authentication operation.
    */
   public void addLoginModule(final Class<? extends Credentials> credentialsType,
-      final Class<? extends LoginModule> module) {
+      final Class<? extends SilverpeasJCRLoginModule> module) {
     registry.computeIfAbsent(credentialsType, k -> new ArrayList<>())
         .add(() -> spawn(module));
   }
 
   /**
-   * Gets all the {@link LoginModule} objects that support the specified type of credentials.
+   * Gets all the {@link LoginModule} objects that support the specified type of credentials. The
+   * modules lifecycle is thread-scoped, meaning they are instantiated per thread, then they are
+   * disposed once the thread terminated.
    * @param credentialsType a concrete type of {@link Credentials}.
    * @return a list of {@link LoginModule} objects that can process the specified type of
    * credentials or an empty list if no one can take in charge this type of credentials.
    */
-  public List<LoginModule> getLoginModule(final Class<? extends Credentials> credentialsType) {
+  public List<SilverpeasJCRLoginModule> getLoginModule(
+      final Class<? extends Credentials> credentialsType) {
     return registry.getOrDefault(credentialsType, Collections.emptyList())
         .stream()
         .map(Supplier::get)
         .collect(Collectors.toList());
   }
 
-  private LoginModule spawn(final Class<? extends LoginModule> clazz) {
-    PrivilegedExceptionAction<? extends LoginModule> newLoginModule = () -> {
-      Constructor<? extends LoginModule> ctor = clazz.getConstructor();
-      int modifier = ctor.getModifiers();
-      if (!Modifier.isPublic(modifier)) {
-        ctor.trySetAccessible();
-      }
+  private SilverpeasJCRLoginModule spawn(final Class<? extends SilverpeasJCRLoginModule> clazz) {
+    SimpleCache cache = CacheServiceProvider.getThreadCacheService().getCache();
+    return cache.computeIfAbsent(getClass().getSimpleName() + "#" + clazz.getName(),
+        SilverpeasJCRLoginModule.class, () -> {
+          PrivilegedExceptionAction<? extends SilverpeasJCRLoginModule> newLoginModule = () -> {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MethodHandles.Lookup
+                privateLookup = MethodHandles.privateLookupIn(clazz, lookup);
+            MethodType constructorType = MethodType.methodType(void.class);
+            MethodHandle constructor = privateLookup.findConstructor(clazz, constructorType);
+            try {
+              //noinspection
+              return (SilverpeasJCRLoginModule) constructor.invoke();
+            } catch (Throwable e) {
+              throw new SilverpeasRuntimeException(e);
+            }
+          };
 
-      return ctor.newInstance();
-    };
-
-    try {
-      return AccessController.doPrivileged(newLoginModule);
-    } catch (PrivilegedActionException e) {
-      throw new SilverpeasRuntimeException(e);
-    }
+          try {
+            return AccessController.doPrivileged(newLoginModule);
+          } catch (PrivilegedActionException e) {
+            throw new SilverpeasRuntimeException(e);
+          }
+        });
   }
 }

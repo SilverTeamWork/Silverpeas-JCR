@@ -52,7 +52,7 @@ class RepositoryFactoryLoadingTest {
   }
 
   @Test
-  @DisplayName("The Java Service Provider API should load more than 2 RepositoryFactory " +
+  @DisplayName("The Java Service Provider API should load at least 2 RepositoryFactory " +
       "instances: one for Oak itself, another one for Silverpeas")
   void loadAtLeastTwoRepositoryFactories() {
     long factoriesCount = ServiceLoader.load(RepositoryFactory.class).stream()

@@ -52,6 +52,7 @@ class RepositoryProviderTest {
   public static final String JCR_HOME = "target/";
   public static final String OAK_CONFIG = "classpath:/silverpeas-oak.properties";
 
+  @SuppressWarnings("unused")
   @TestedBean
   private RepositoryProvider provider;
 

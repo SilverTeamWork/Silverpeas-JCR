@@ -34,8 +34,7 @@ import javax.jcr.RepositoryException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -49,8 +48,9 @@ class OakRepositoryFactoryTest {
   private static final String JCR_HOME = "target/";
   private static final String OAK_CONFIG = "classpath:/silverpeas-oak.properties";
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
-  @DisplayName("A repository can be make by the Oak repository factory from a configuration file" +
+  @DisplayName("A repository can be made by the Oak repository factory from a configuration file" +
       " and by using Oak")
   void getARepositoryFromTheFactory() throws RepositoryException {
     Map parameters = new HashMap();
@@ -60,6 +60,6 @@ class OakRepositoryFactoryTest {
     OakRepositoryFactory factory = new OakRepositoryFactory();
     Repository repository = factory.getRepository(parameters);
     assertThat(repository, notNullValue());
-    assertThat(repository instanceof RepositoryImpl, is(true));
+    assertThat(repository, is(instanceOf(RepositoryImpl.class)));
   }
 }

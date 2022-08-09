@@ -48,11 +48,12 @@ public class SegmentNodeStoreFactory implements NodeStoreFactory {
 
   @Override
   public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
-    if (conf.getStorageType() != StorageType.SEGMENT_NODE_STORE) {
+    if (conf.getStorageType() != StorageType.SEGMENT_NODE_STORE ||
+        conf.getStorageType() != StorageType.COMPOSITE_NODE_STORE) {
       return null;
     }
 
-    SegmentNodeStoreConfiguration parameters = conf.getSegmentNodeStore();
+    SegmentNodeStoreConfiguration parameters = conf.getSegmentNodeStoreConfiguration();
     String repoHome =
         StringUtil.isDefined(parameters.getRepositoryHome()) ? parameters.getRepositoryHome() :
             jcrHomePath;

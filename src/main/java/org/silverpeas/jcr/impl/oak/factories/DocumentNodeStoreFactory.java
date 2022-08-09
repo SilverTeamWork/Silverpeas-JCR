@@ -58,17 +58,19 @@ public class DocumentNodeStoreFactory implements NodeStoreFactory {
       DocumentStoreType.MONGO, this::createMongoNodeStore,
       DocumentStoreType.RDB, c -> {
         throw new NotSupportedException(
-            "The relational database backend isn't currently supported as document-based datasource");
+            "The relational database backend isn't currently supported as document-based " +
+                "datasource");
       }
   );
 
   @Override
   public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
-    if (conf.getStorageType() != StorageType.DOCUMENT_NODE_STORE) {
+    if (conf.getStorageType() != StorageType.DOCUMENT_NODE_STORE ||
+        conf.getStorageType() != StorageType.COMPOSITE_NODE_STORE) {
       return null;
     }
 
-    DocumentNodeStoreConfiguration docNodeConf = conf.getDocumentNodeStore();
+    DocumentNodeStoreConfiguration docNodeConf = conf.getDocumentNodeStoreConfiguration();
     return nodeStoreBuilders.getOrDefault(docNodeConf.getDocumentStoreType(), c -> null)
         .apply(docNodeConf);
   }
@@ -91,7 +93,7 @@ public class DocumentNodeStoreFactory implements NodeStoreFactory {
             .setRevisionGCMaxAge(conf.getVersionGCMaxAge())
             .setLeaseCheckMode(LeaseCheckMode.valueOf(conf.getLeaseCheckMode()))
             .setNodeCachePathPredicate(createCachePredicate(conf))
-            .setUpdateLimit(conf.getUpdateLimit());
+            .setUpdateLimit(conf.getUpdateNbLimit());
 
     return builder.build();
   }

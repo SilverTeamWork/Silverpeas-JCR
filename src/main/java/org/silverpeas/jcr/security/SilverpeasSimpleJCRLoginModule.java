@@ -30,18 +30,18 @@ import org.silverpeas.core.security.authentication.Authentication;
 import org.silverpeas.core.security.authentication.AuthenticationCredential;
 import org.silverpeas.core.security.authentication.AuthenticationResponse;
 import org.silverpeas.core.security.authentication.exception.AuthenticationException;
-import org.silverpeas.core.util.StringUtil;
 
 import javax.annotation.Nonnull;
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.login.LoginException;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
- * A login module to authenticate the users that access the JCR repository used by Silverpeas.
- * This login module takes {@link javax.jcr.SimpleCredentials} in which are set both the user
- * connection identifier and the associated password.
+ * A login module to authenticate the users that access the JCR repository used by Silverpeas. This
+ * login module takes {@link javax.jcr.SimpleCredentials} in which are set both the user connection
+ * identifier and the associated password.
  * <p>
  * The login module delegates the authentication itself to an authentication service that has the
  * knowledge of how to perform the authentication on behalf of Silverpeas.
@@ -59,6 +59,12 @@ public class SilverpeasSimpleJCRLoginModule extends SilverpeasJCRLoginModule {
 
   @Override
   protected User authenticateUser(final Credentials credentials) throws LoginException {
+    SimpleCredentials simpleCredentials = (SimpleCredentials) credentials;
+    if (isJcrSystemCredentials(simpleCredentials)) {
+      // by default, no authentication needed; The JCR system user is always accepted to access the
+      // JCR with full privileges
+      return User.getSystemUser();
+    }
     Authentication auth = Authentication.get();
     AuthenticationCredential cred = convert((SimpleCredentials) credentials);
     AuthenticationResponse resp = auth.authenticate(cred);
@@ -75,19 +81,21 @@ public class SilverpeasSimpleJCRLoginModule extends SilverpeasJCRLoginModule {
     }
   }
 
+  private boolean isJcrSystemCredentials(final SimpleCredentials credentials) {
+    SimpleCredentials systemCredentials =
+        (SimpleCredentials) JCRUserCredentialsProvider.getJcrSystemCredentials();
+    return systemCredentials.getUserID().equals(credentials.getUserID()) &&
+        Arrays.equals(systemCredentials.getPassword(), credentials.getPassword());
+  }
+
   @Nonnull
-  private AuthenticationCredential convert(final SimpleCredentials credentials) throws LoginException {
-    String userId = credentials.getUserID();
-    if (StringUtil.isNotDefined(userId)) {
-      throw new LoginException("No user ID defined!");
+  private AuthenticationCredential convert(final SimpleCredentials credentials)
+      throws LoginException {
+    AuthenticationCredential credential =
+        JCRUserCredentialsProvider.getAuthCredentials(credentials);
+    if (credential == null) {
+      throw new LoginException("Invalid user ID in credentials!");
     }
-    String[] userIdParts = userId.split("@domain");
-    if (userIdParts.length != 2) {
-      throw new LoginException("Bad user ID format!");
-    }
-    return AuthenticationCredential
-        .newWithAsLogin(userIdParts[0])
-        .withAsDomainId(userIdParts[1])
-        .withAsPassword(String.valueOf(credentials.getPassword()));
+    return credential;
   }
 }

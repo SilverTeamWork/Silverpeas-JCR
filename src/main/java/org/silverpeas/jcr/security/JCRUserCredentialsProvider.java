@@ -24,6 +24,10 @@
 
 package org.silverpeas.jcr.security;
 
+import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
+import org.silverpeas.core.security.authentication.AuthenticationCredential;
+import org.silverpeas.core.util.StringUtil;
+
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 
@@ -53,7 +57,7 @@ public final class JCRUserCredentialsProvider {
   }
 
   /**
-   * Gets the credentials of a user in Silverpeas to authenticate him against the JCR.
+   * Gets the simple credentials of a user in Silverpeas to authenticate him against the JCR.
    * @param login the login the user uses to authenticate him usually in Silverpeas.
    * @param domainId the unique identifier of the user domain in which the user belongs.
    * @param password the password the user uses to authenticate him usually in Silverpeas.
@@ -63,5 +67,35 @@ public final class JCRUserCredentialsProvider {
       final String password) {
     return new SimpleCredentials(login + "@domain" + domainId,
         password.toCharArray());
+  }
+
+  /**
+   * Gets the credentials by token of a user in Silverpeas to authenticate him against the JCR.
+   * @param token the API token of the user to authenticate him.
+   * @return the token credentials corresponding to the given user in Silverpeas/
+   */
+  public static Credentials getUserCredentials(final String token) {
+    return new TokenCredentials(token);
+  }
+
+  /**
+   * Gets the authentication credentials required by Silverpeas to authenticate a user from his
+   * JCR simple credentials.
+   * @param credentials a simple credentials of a user in Silverpeas.
+   * @return an authentication credentials.
+   */
+  public static AuthenticationCredential getAuthCredentials(final SimpleCredentials credentials) {
+    String userId = credentials.getUserID();
+    if (StringUtil.isNotDefined(userId)) {
+      return null;
+    }
+    String[] userIdParts = userId.split("@domain");
+    if (userIdParts.length != 2) {
+      return null;
+    }
+    return AuthenticationCredential
+        .newWithAsLogin(userIdParts[0])
+        .withAsDomainId(userIdParts[1])
+        .withAsPassword(String.valueOf(credentials.getPassword()));
   }
 }

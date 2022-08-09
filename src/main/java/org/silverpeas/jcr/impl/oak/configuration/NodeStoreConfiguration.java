@@ -50,27 +50,15 @@ public abstract class NodeStoreConfiguration {
    * must be identified by a full qualified name. The full qualified name is formatted as a
    * dot-separated path of names, each of them defining a subset of properties. By convention, the
    * root name in the paths denotes the type of the node storage for which the configuration
-   * parameters are defined. The root name is taken automatically from the class name of the
-   * implementation of the {@link NodeStoreConfiguration} abstract class from which the term
-   * <code>Configuration</code> is removed; for example, for a
-   * <code>SegmentNodeStoreConfiguration</code>,
-   * the root name will be <code>SegmentNodeStore</code>.
+   * parameters are defined.
    * @param props the {@link Properties} containing all the parameters of a node stare.
    */
   NodeStoreConfiguration(final Properties props) {
     this.properties = props;
   }
 
-  private String getKeyPrefix() {
-    return this.getClass().getSimpleName().replace("Configuration", "");
-  }
-
-  private String getPropertyKey(final String name) {
-    return getKeyPrefix() + "." + name;
-  }
-
   protected boolean getBoolean(String name, boolean defaultValue) {
-    String value = properties.getProperty(getPropertyKey(name));
+    String value = properties.getProperty(name);
     if (StringUtil.isNotDefined(value)) {
       return defaultValue;
     }
@@ -78,7 +66,7 @@ public abstract class NodeStoreConfiguration {
   }
 
   protected int getInteger(String name, int defaultValue) {
-    String value = properties.getProperty(getPropertyKey(name));
+    String value = properties.getProperty(name);
     if (StringUtil.isNotDefined(value)) {
       return defaultValue;
     }
@@ -86,24 +74,25 @@ public abstract class NodeStoreConfiguration {
   }
 
   protected long getLong(String name, long defaultValue) {
-    String value = properties.getProperty(getPropertyKey(name));
+    String value = properties.getProperty(name);
     if (StringUtil.isNotDefined(value)) {
       return defaultValue;
     }
     return Long.parseLong(value);
   }
 
-  protected String getString(String name) {
-    return properties.getProperty(getPropertyKey(name));
+  protected String getString(@SuppressWarnings("SameParameterValue") String name) {
+    return properties.getProperty(name);
   }
 
   protected String getString(String name, String defaultValue) {
-    return properties.getProperty(getPropertyKey(name), defaultValue);
+    return properties.getProperty(name, defaultValue);
   }
 
-  protected List<String> getList(String name, List<String> defaultValue) {
+  protected List<String> getList(@SuppressWarnings("SameParameterValue") String name,
+      @SuppressWarnings("SameParameterValue") List<String> defaultValue) {
     String value = properties.getProperty(name);
-    if (StringUtil.isNotDefined(value.trim())) {
+    if (StringUtil.isNotDefined(value)) {
       return defaultValue;
     }
     return Arrays.stream(value.split(","))

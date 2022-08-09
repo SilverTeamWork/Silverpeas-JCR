@@ -2,8 +2,7 @@ package org.silverpeas.jcr.security;
 
 import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
 import org.silverpeas.core.admin.user.model.User;
-import org.silverpeas.core.admin.user.model.UserReference;
-import org.silverpeas.core.security.token.persistent.PersistentResourceToken;
+import org.silverpeas.core.admin.user.service.UserProvider;
 
 import javax.annotation.Nonnull;
 import javax.jcr.Credentials;
@@ -23,12 +22,10 @@ public class SilverpeasTokenJCRLoginModule extends SilverpeasJCRLoginModule {
   protected User authenticateUser(final Credentials credentials)
       throws LoginException {
     String token = ((TokenCredentials) credentials).getToken();
-    final PersistentResourceToken userToken = PersistentResourceToken.getToken(token);
-    final UserReference userRef = userToken.getResource(UserReference.class);
-    if (userRef != null) {
-      return userRef.getEntity();
-    } else {
+    User user = UserProvider.get().getUserByToken(token);
+    if (user == null) {
       throw new LoginException("User API Token '" + token + "' non valid!");
     }
+    return user;
   }
 }

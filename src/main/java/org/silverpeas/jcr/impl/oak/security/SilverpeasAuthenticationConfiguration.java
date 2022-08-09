@@ -23,14 +23,12 @@
  */
 package org.silverpeas.jcr.impl.oak.security;
 
-import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
 import org.apache.jackrabbit.oak.api.ContentRepository;
 import org.apache.jackrabbit.oak.spi.security.SecurityConfiguration;
 import org.apache.jackrabbit.oak.spi.security.authentication.AuthenticationConfiguration;
 import org.apache.jackrabbit.oak.spi.security.authentication.LoginContextProvider;
 
 import javax.annotation.Nonnull;
-import javax.jcr.SimpleCredentials;
 import javax.security.auth.Subject;
 
 /**
@@ -48,18 +46,8 @@ public class SilverpeasAuthenticationConfiguration extends SecurityConfiguration
   public LoginContextProvider getLoginContextProvider(
       @Nonnull final ContentRepository contentRepository) {
     return (credentials, workspaceName) -> {
-      Subject subject = new Subject();
-      if (credentials != null) {
-        if (credentials instanceof TokenCredentials || credentials instanceof SimpleCredentials) {
-          // login/password credentials and token credentials are private
-          subject.getPrivateCredentials().add(credentials);
-        } else {
-          // other credentials are public (the information doesn't need to be hidden)
-          subject.getPublicCredentials().add(credentials);
-        }
-      }
-
-      return new SilverpeasLoginContext(subject);
+      Subject subject = getSubject();
+      return new SilverpeasLoginContext(subject, new SilverpeasCallbackHandler(credentials));
     };
   }
 
@@ -67,6 +55,10 @@ public class SilverpeasAuthenticationConfiguration extends SecurityConfiguration
   @Nonnull
   public String getName() {
     return NAME;
+  }
+
+  private Subject getSubject() {
+    return new Subject();
   }
 
 }

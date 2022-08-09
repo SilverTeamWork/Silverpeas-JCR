@@ -75,6 +75,32 @@ import java.util.Properties;
  */
 public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
 
+  /**
+   * Default values of the different segment node storage configuration parameters. Parameters that
+   * aren't set in the configuration file are automatically valued with these defaults values below.
+   */
+  public static class DefaultValues {
+    public static final int MAX_TAR_SIZE = FileStoreBuilder.DEFAULT_MAX_FILE_SIZE;
+    public static final int SEGMENT_CACHE_SIZE = SegmentCache.DEFAULT_SEGMENT_CACHE_MB;
+    public static final int STRING_CACHE_SIZE = CachingSegmentReader.DEFAULT_STRING_CACHE_MB;
+    public static final int TEMPLATE_CACHE_SIZE = CachingSegmentReader.DEFAULT_TEMPLATE_CACHE_MB;
+    public static final int STRING_DEDUPLICATION_CACHE_SIZE = 15000;
+    public static final int TEMPLATE_DEDUPLICATION_CACHE_SIZE = 3000;
+    public static final int NODE_DEDUPLICATION_CACHE_SIZE = 1048576;
+    public static final boolean COMPACTION_PAUSE = SegmentGCOptions.PAUSE_DEFAULT;
+    public static final int COMPACTION_RETRY_COUNT = SegmentGCOptions.RETRY_COUNT_DEFAULT;
+    public static final int COMPACTION_FORCE_TIMEOUT = SegmentGCOptions.FORCE_TIMEOUT_DEFAULT;
+    public static final long COMPACTION_SIZE_DELTA_ESTIMATION =
+        SegmentGCOptions.SIZE_DELTA_ESTIMATION_DEFAULT;
+    public static final boolean COMPACTION_DISABLE_ESTIMATION =
+        SegmentGCOptions.DISABLE_ESTIMATION_DEFAULT;
+    public static final int COMPACTION_MEMORY_THRESHOLD = SegmentGCOptions.MEMORY_THRESHOLD_DEFAULT;
+    public static final long COMPACTION_PROGRESS_LOG = SegmentGCOptions.GC_PROGRESS_LOG_DEFAULT;
+
+    private DefaultValues() {
+    }
+  }
+
   SegmentNodeStoreConfiguration(final Properties props) {
     super(props);
   }
@@ -83,7 +109,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * Gets the absolute path on the file system where repository data will be stored. The Segment
    * Store persists its data in a subdirectory of this home directory named
    * <code>segmentstore</code> and the backups of the Node Store will be stored in a subdirectory
-   * of this homde directory named <code>segmentstore-backup</code>.
+   * of this home directory named <code>segmentstore-backup</code>.
    * @return the absolute path of the JCR in the filesystem.
    */
   public String getRepositoryHome() {
@@ -97,7 +123,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the tar files in MB.
    */
   public int getTarMaxSize() {
-    return getInteger("segment.tar.size", FileStoreBuilder.DEFAULT_MAX_FILE_SIZE);
+    return getInteger("segment.tar.size", DefaultValues.MAX_TAR_SIZE);
   }
 
   /**
@@ -106,7 +132,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the segment cache in MB
    */
   public int getSegmentCacheSize() {
-    return getInteger("segment.segmentCache.size", SegmentCache.DEFAULT_SEGMENT_CACHE_MB);
+    return getInteger("segment.cache.size", DefaultValues.SEGMENT_CACHE_SIZE);
   }
 
   /**
@@ -115,7 +141,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the strings cache in MB
    */
   public int getStringCacheSize() {
-    return getInteger("segment.stringCache.size", CachingSegmentReader.DEFAULT_STRING_CACHE_MB);
+    return getInteger("segment.string.cache.size", DefaultValues.STRING_CACHE_SIZE);
   }
 
   /**
@@ -124,7 +150,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the template cache in MB
    */
   public int getTemplateCacheSize() {
-    return getInteger("segment.templateCache.size", CachingSegmentReader.DEFAULT_TEMPLATE_CACHE_MB);
+    return getInteger("segment.template.cache.size", DefaultValues.TEMPLATE_CACHE_SIZE);
   }
 
   /**
@@ -135,7 +161,8 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the string deduplication cache in number of items
    */
   public int getStringDeduplicationCacheSize() {
-    return getInteger("segment.stringDeduplicationCache.size", 15000);
+    return getInteger("segment.string.deduplicationCache.size",
+        DefaultValues.STRING_DEDUPLICATION_CACHE_SIZE);
   }
 
   /**
@@ -146,7 +173,8 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the template deduplication cache in number of items
    */
   public int getTemplateDeduplicationCacheSize() {
-    return getInteger("segment.templateDeduplicationCache.size", 3000);
+    return getInteger("segment.template.deduplicationCache.size",
+        DefaultValues.TEMPLATE_DEDUPLICATION_CACHE_SIZE);
   }
 
   /**
@@ -156,7 +184,8 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the maximum size of the node deduplication cache in number of items
    */
   public int getNodeDeduplicationCacheSize() {
-    return getInteger("segment.nodeDeduplicationCache.size", 1048576);
+    return getInteger("segment.node.deduplicationCache.size",
+        DefaultValues.NODE_DEDUPLICATION_CACHE_SIZE);
   }
 
   /**
@@ -165,7 +194,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return true if online compaction should be executed. False otherwise.
    */
   public boolean isPauseCompaction() {
-    return getBoolean("segment.compaction.pause", SegmentGCOptions.PAUSE_DEFAULT);
+    return getBoolean("segment.compaction.pause", DefaultValues.COMPACTION_PAUSE);
   }
 
   /**
@@ -176,7 +205,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the number of commit attempts of compaction.
    */
   public int getCompactionRetryCount() {
-    return getInteger("segment.compaction.retryCount", SegmentGCOptions.RETRY_COUNT_DEFAULT);
+    return getInteger("segment.compaction.retryCount", DefaultValues.COMPACTION_RETRY_COUNT);
   }
 
   /**
@@ -192,7 +221,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * @return the amount of time in seconds the compaction is allowed to lock the store.
    */
   public int getCompactionForceTimeout() {
-    return getInteger("segment.compaction.forceTimeout", SegmentGCOptions.FORCE_TIMEOUT_DEFAULT);
+    return getInteger("segment.compaction.forceTimeout", DefaultValues.COMPACTION_FORCE_TIMEOUT);
   }
 
   /**
@@ -202,7 +231,7 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    */
   public long getCompactionSizeDeltaEstimation() {
     return getLong("segment.compaction.sizeDeltaEstimation",
-        SegmentGCOptions.SIZE_DELTA_ESTIMATION_DEFAULT);
+        DefaultValues.COMPACTION_SIZE_DELTA_ESTIMATION);
   }
 
   /**
@@ -213,18 +242,18 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    */
   public boolean isCompactionDisableEstimation() {
     return getBoolean("segment.compaction.disableEstimation",
-        SegmentGCOptions.DISABLE_ESTIMATION_DEFAULT);
+        DefaultValues.COMPACTION_DISABLE_ESTIMATION);
   }
 
   /**
    * Gets the percentage of heap memory that should always be free while compaction runs. If the
-   * available heap memory falls below the specified percentage, compaction will not be started or
+   * available heap memory falls below the specified percentage, compaction will not be started, or
    * it will be aborted if it is already running.
    * @return the threshold of heap memory in percentage to keep free for compaction.
    */
   public int getCompactionMemoryThreshold() {
     return getInteger("segment.compaction.memoryThreshold",
-        SegmentGCOptions.MEMORY_THRESHOLD_DEFAULT);
+        DefaultValues.COMPACTION_MEMORY_THRESHOLD);
   }
 
   /**
@@ -234,6 +263,6 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
    * progress logging is disabled.
    */
   public long getCompactionProgressLog() {
-    return getLong("segment.compaction.progressLog", SegmentGCOptions.GC_PROGRESS_LOG_DEFAULT);
+    return getLong("segment.compaction.progressLog", DefaultValues.COMPACTION_PROGRESS_LOG);
   }
 }

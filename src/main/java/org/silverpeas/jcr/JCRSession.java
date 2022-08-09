@@ -24,22 +24,18 @@
 
 package org.silverpeas.jcr;
 
+import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
+import org.silverpeas.core.admin.user.model.User;
+import org.silverpeas.core.admin.user.service.UserProvider;
 import org.silverpeas.core.cache.model.SimpleCache;
 import org.silverpeas.core.cache.service.CacheServiceProvider;
+import org.silverpeas.core.security.authentication.AuthenticationCredential;
 import org.silverpeas.core.util.logging.SilverLogger;
 import org.silverpeas.jcr.security.JCRUserCredentialsProvider;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import javax.jcr.Credentials;
-import javax.jcr.Item;
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.ValueFactory;
-import javax.jcr.Workspace;
+import javax.jcr.*;
 import javax.jcr.retention.RetentionManager;
 import javax.jcr.security.AccessControlManager;
 import java.io.Closeable;
@@ -47,12 +43,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessControlException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Implementation of the {@link javax.jcr.Session} in Silverpeas. It decorates the real session that
  * was opened for accessing the repository by adding to it auto-closeable trait and reentrant
- * capability.
+ * capability. Be aware about the limitation of the hypothesis on which the implementation of this
+ * reentrant session is built: it expects only one user session can be opened within a single
+ * thread, meaning that any further login attempts along one single thread will return the same
+ * session; in the case a login attempt is performed by another user in the same thread, an
+ * {@link IllegalStateException} exception is thrown.
  * @author mmoquillon
  */
 public class JCRSession implements Session, Closeable {
@@ -63,22 +64,36 @@ public class JCRSession implements Session, Closeable {
   private int opened = 1;
 
   /**
-   * Opens a new session with the JCR. If a session was already opened within the current thread,
-   * then returns it. Otherwise, asks for the specified login mechanism to open a new session. This
-   * method is dedicated to be used by the {@link SilverpeasContentRepository} instance when a login
-   * to the JCR is invoked; the login call is delegated to the {@link JCRSession} through the given
-   * {@link JCRLogin} function.
+   * Opens a new session with the JCR. If a session has been already opened for the same user within
+   * the current thread, then returns it. Otherwise, asks for the specified login mechanism to open
+   * a new session. It expects any session opening in a same thread are performed for the same user,
+   * otherwise an {@link IllegalStateException} is throw.
+   * <p>
+   * This method is dedicated to be used by the {@link SilverpeasContentRepository} instance when a
+   * login to the JCR is invoked; the login call is delegated to the {@link JCRSession} with the
+   * given {@link JCRLogin} function.
    * @param login the JCR login mechanism from which a new user session is obtained.
    * @return a reentrant JCR session wrapping the real user session with the repository.
    * @throws RepositoryException if an error occurs while opening a new session with the JCR.
    */
-  static JCRSession open(final JCRLogin login) throws RepositoryException {
+  static JCRSession open(final Credentials credentials, final JCRLogin login)
+      throws RepositoryException {
     final JCRSession session;
     final Optional<JCRSession> current = getCurrent();
     if (current.isPresent()) {
+      String userId = getUserID(credentials);
       session = current.get();
+      String sessionUserId = session.getUserID();
+      if (!Objects.equals(sessionUserId, userId)) {
+        String suid = sessionUserId == null ? "guest" : sessionUserId;
+        String uid = userId == null ? "unknown" : userId;
+        throw new IllegalStateException("Attempt of " + uid +
+            " to log into the repository whereas a session was already opened in the same thread " +
+            "by the user " + suid);
+      }
     } else {
-      session = new JCRSession(login.get());
+      //noinspection resource
+      session = new JCRSession(login.proceed(credentials));
     }
     return session.open();
   }
@@ -93,8 +108,36 @@ public class JCRSession implements Session, Closeable {
   }
 
   /**
+   * Gets the unique identifier of the user having the specified credentials. If no user matches the
+   * given credentials, then null is returned.
+   * @param credentials the credentials of a user in Silverpeas.
+   * @return either the user behind the specified credentials or null.
+   */
+  private static String getUserID(final Credentials credentials) {
+    User user;
+    if (credentials instanceof SimpleCredentials) {
+      SimpleCredentials simpleCred = (SimpleCredentials) credentials;
+      if (simpleCred.getUserID().equals(JCRUserCredentialsProvider.JCR_SYSTEM_ID)) {
+        user = User.getSystemUser();
+      } else {
+        AuthenticationCredential authCred =
+            JCRUserCredentialsProvider.getAuthCredentials((SimpleCredentials) credentials);
+        user = authCred != null ? UserProvider.get()
+            .getUserByLoginAndDomainId(authCred.getLogin(), authCred.getDomainId()) : null;
+      }
+    } else if (credentials instanceof TokenCredentials) {
+      user = UserProvider.get().getUserByToken(((TokenCredentials) credentials).getToken());
+    } else {
+      user = null;
+    }
+    return user == null ? null : user.getId();
+  }
+
+  /**
    * Opens a session to the JCR for the system user (id est for Silverpeas with administrative
-   * rights). If a session already exists, then just returns it. Otherwise, a new session is opened.
+   * rights). If a session already exists, then just returns it. Otherwise, a new session is
+   * opened.
+   * <p>
    * This is a shortcut of:
    * <pre><code>
    *   Repository repository = RepositoryProvider.get().getRepository();
@@ -104,6 +147,7 @@ public class JCRSession implements Session, Closeable {
    * @return a session
    * @throws RepositoryException if the session opening fails.
    */
+  @SuppressWarnings("unused")
   public static JCRSession openSystemSession() throws RepositoryException {
     SilverpeasContentRepository repo = RepositoryProvider.get().getRepository();
     Credentials credentials = JCRUserCredentialsProvider.getJcrSystemCredentials();
@@ -112,7 +156,10 @@ public class JCRSession implements Session, Closeable {
 
   /**
    * Opens a session to the JCR for the specified user. If a session already exists, then just
-   * returns it. Otherwise, a new session is opened. This is a shortcut of:
+   * returns it. Otherwise, a new session is opened. It expects any session opening in a same thread
+   * are performed for the same user, otherwise an {@link IllegalStateException} is throw.
+   * <p>
+   * This is a shortcut of:
    * <pre><code>
    *   Repository repository = RepositoryProvider.get().getRepository();
    *   Credentials credentials = JCRUserCredentialsProvider.getUserCredentials(login, domainId, password);
@@ -121,6 +168,7 @@ public class JCRSession implements Session, Closeable {
    * @return a session
    * @throws RepositoryException if the session opening fails.
    */
+  @SuppressWarnings("unused")
   public static JCRSession openUserSession(String login, String domainId, String password)
       throws RepositoryException {
     SilverpeasContentRepository repo = RepositoryProvider.get().getRepository();
@@ -137,7 +185,7 @@ public class JCRSession implements Session, Closeable {
    */
   private JCRSession(final Session session) {
     getCurrent().ifPresent(s -> {
-      throw new IllegalStateException("A session is already opened!: ");
+      throw new IllegalStateException("A session is already opened!");
     });
     this.session = session;
   }
@@ -147,6 +195,10 @@ public class JCRSession implements Session, Closeable {
     return RepositoryProvider.get().getRepository();
   }
 
+  /**
+   * The unique identifier of the user in Silverpeas who has opened this session.
+   * @return the user identifier
+   */
   @Override
   public String getUserID() {
     return session.getUserID();
@@ -338,6 +390,8 @@ public class JCRSession implements Session, Closeable {
   @Override
   public void logout() {
     if (opened <= 1) {
+      SimpleCache cache = CacheServiceProvider.getThreadCacheService().getCache();
+      cache.remove(SESSION_KEY_CACHE);
       session.logout();
     } else {
       opened--;
@@ -391,7 +445,7 @@ public class JCRSession implements Session, Closeable {
 
   @Override
   public void close() {
-    session.logout();
+    logout();
   }
 
   /**
@@ -411,6 +465,6 @@ public class JCRSession implements Session, Closeable {
    */
   @FunctionalInterface
   interface JCRLogin {
-    Session get() throws RepositoryException;
+    Session proceed(final Credentials credentials) throws RepositoryException;
   }
 }

@@ -82,31 +82,60 @@ import java.util.Properties;
 public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
 
   /**
+   * Default values of the different document node storage configuration parameters. Parameters that
+   * aren't set in the configuration file are automatically valued with these defaults values below.
+   */
+  public static class DefaultValues {
+    public static final String DB_URI = "mongodb://localhost:27017";
+    public static final String DB_NAME = "oak";
+    public static final boolean SOCKET_KEEP_ALIVE = true;
+    public static final int CACHE_SIZE = 256;
+    public static final int MAX_REPLICATION_LAG = 21600;
+    public static final int VERSION_GC_MAX_AGE = 86400;
+    public static final long JOURNAL_GC_MAX_AGE = 86400000L;
+    public static final int BLOB_CACHE_SIZE = 16;
+    public static final List<String> PERSISTENT_CACHE_CONTENT = List.of("/");
+    public static final int NODE_CACHE_PERCENTAGE = 35;
+    public static final int PREV_DOC_CACHE_PERCENTAGE = 4;
+    public static final int CHILDREN_CACHE_PERCENTAGE = 15;
+    public static final int DIFF_CACHE_PERCENTAGE = 30;
+    public static final int CACHE_SEGMENT_COUNT = 16;
+    public static final int CACHE_STACK_MOVE_DISTANCE = 16;
+    public static final int UPDATE_COUNT_THRESHOLD = 100000;
+    public static final String LEASE_CHECK_MODE = "STRICT";
+    public static final String STORE_TYPE = DocumentStoreType.MONGO.name();
+
+    private DefaultValues() {
+
+    }
+  }
+
+  /**
    * Specifies the MongoURI required to connect to Mongo Database.
    */
   public String getUri() {
-    return getString("document.uri", "mongodb://localhost:27017");
+    return getString("document.uri", DefaultValues.DB_URI);
   }
 
   /**
    * Name of the database in Mongo.
    */
   public String getDBName() {
-    return getString("document.db", "oak");
+    return getString("document.db", DefaultValues.DB_NAME);
   }
 
   /**
    * Enables socket keep-alive for MongoDB connections.
    */
   public boolean getSocketKeepAlive() {
-    return getBoolean("document.socketKeepAlive", true);
+    return getBoolean("document.socketKeepAlive", DefaultValues.SOCKET_KEEP_ALIVE);
   }
 
   /**
    * Cache size in MB. This is distributed among various caches used in DocumentNodeStore.
    */
   public int getCacheSize() {
-    return getInteger("document.cache", 256);
+    return getInteger("document.cache", DefaultValues.CACHE_SIZE);
   }
 
   /**
@@ -115,7 +144,7 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * default 6 hours.
    */
   public int getMaxReplicationLag() {
-    return getInteger("document.maxReplicationLagInSecs", 21600);
+    return getInteger("document.maxReplicationLagInSecs", DefaultValues.MAX_REPLICATION_LAG);
   }
 
   /**
@@ -126,7 +155,7 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * removed and that too only after (currentTime -T1 > versionGcMaxAgeInSecs).
    */
   public int getVersionGCMaxAge() {
-    return getInteger("document.versionGCMaxAgeInSecs", 86400);
+    return getInteger("document.versionGCMaxAgeInSecs", DefaultValues.VERSION_GC_MAX_AGE);
   }
 
   /**
@@ -134,7 +163,7 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * maximum age is specified in milliseconds. By default, 24 hours.
    */
   public long getJournalGCMaxAge() {
-    return getLong("document.journalGCMaxAge", 86400000L);
+    return getLong("document.journalGCMaxAge", DefaultValues.JOURNAL_GC_MAX_AGE);
   }
 
   /**
@@ -143,64 +172,64 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * used blobs can be configured via blobCacheSize.
    */
   public int getBlobCacheSize() {
-    return getInteger("document.blobCacheSize", 16);
+    return getInteger("document.blobCacheSize", DefaultValues.BLOB_CACHE_SIZE);
   }
 
   /**
-   * List of paths defining the subtrees that are cached.
+   * List of paths defining the subtrees to cache.
    */
   public List<String> getSubtreesInPersistentCache() {
-    return getList("document.persistentCacheIncludes", List.of("/"));
+    return getList("document.persistentCacheIncludes", DefaultValues.PERSISTENT_CACHE_CONTENT);
   }
 
   /**
    * Percentage of cache allocated for nodeCache.
    */
   public int getNodeCachePercentage() {
-    return getInteger("document.nodeCachePercentage", 35);
+    return getInteger("document.nodeCachePercentage", DefaultValues.NODE_CACHE_PERCENTAGE);
   }
 
   /**
    * Percentage of cache allocated for prevDocCache.
    */
   public int getPrevDocCachePercentage() {
-    return getInteger("document.nodeCachePercentage", 4);
+    return getInteger("document.prevDocCachePercentage", DefaultValues.PREV_DOC_CACHE_PERCENTAGE);
   }
 
   /**
    * Percentage of cache allocated for childrenCache.
    */
   public int getChildrenCachePercentage() {
-    return getInteger("document.childrenCachePercentage", 15);
+    return getInteger("document.childrenCachePercentage", DefaultValues.CHILDREN_CACHE_PERCENTAGE);
   }
 
   /**
    * Percentage of cache allocated for diffCache.
    */
   public int getDiffCachePercentage() {
-    return getInteger("document.diffCachePercentage", 30);
+    return getInteger("document.diffCachePercentage", DefaultValues.DIFF_CACHE_PERCENTAGE);
   }
 
   /**
    * The number of segments in the LIRS cache.
    */
   public int getCacheSegmentCount() {
-    return getInteger("document.cacheSegmentCount", 16);
+    return getInteger("document.cacheSegmentCount", DefaultValues.CACHE_SEGMENT_COUNT);
   }
 
   /**
    * The delay to move entries to the head of the queue in the LIRS cache.
    */
   public int getCacheStackMoveDistance() {
-    return getInteger("document.cacheStackMoveDistance", 16);
+    return getInteger("document.cacheStackMoveDistance", DefaultValues.CACHE_STACK_MOVE_DISTANCE);
   }
 
   /**
    * The number of updates kept in memory until changes are written to a branch in the
    * DocumentStore.
    */
-  public int getUpdateLimit() {
-    return getInteger("document.updateLimit", 100000);
+  public int getUpdateNbLimit() {
+    return getInteger("document.updateLimit", DefaultValues.UPDATE_COUNT_THRESHOLD);
   }
 
   /**
@@ -210,7 +239,7 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * application and the lease may expire when the JVM is stopped at a breakpoint.
    */
   public String getLeaseCheckMode() {
-    return getString("document.leaseCheckMode", "STRICT");
+    return getString("document.leaseCheckMode", DefaultValues.LEASE_CHECK_MODE);
   }
 
   /**
@@ -218,7 +247,7 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
    * Sling DataSource called oak.
    */
   public DocumentStoreType getDocumentStoreType() {
-    return DocumentStoreType.valueOf(getString("document.storeType", "MONGO"));
+    return DocumentStoreType.valueOf(getString("document.storeType", DefaultValues.STORE_TYPE));
   }
 
   DocumentNodeStoreConfiguration(Properties props) {

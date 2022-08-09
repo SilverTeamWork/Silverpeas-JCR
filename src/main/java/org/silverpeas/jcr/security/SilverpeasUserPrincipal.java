@@ -26,30 +26,62 @@ package org.silverpeas.jcr.security;
 
 import org.silverpeas.core.admin.user.model.User;
 
+import javax.annotation.Nonnull;
 import java.security.Principal;
+import java.util.Objects;
 
 /**
- * Principal representing a user in Silverpeas.
+ * Principal representing a user accessing the JCR. This user can be either a user in Silverpeas or
+ * the JCR system user. The JCR system user is a predefined one, and it is a virtual user. As such,
+ * it represents no user in Silverpeas; so the {@link #getUser()} method returns nothing.?
  * @author mmoquillon
  */
 public class SilverpeasUserPrincipal implements Principal {
 
   private final User user;
 
-  SilverpeasUserPrincipal(final User user) {
+  SilverpeasUserPrincipal(@Nonnull final User user) {
+    Objects.requireNonNull(user);
     this.user = user;
   }
 
   @Override
   public String getName() {
-    return user.getDisplayedName();
+    return user.getId();
   }
 
   /**
-   * Gets the user behind this principal.
-   * @return a user in Silverpeas.
+   * Gets optionally the user in Silverpeas behind this principal. Nothing is returned when the
+   * represented user is the JCR system one as it presents nobody in the user database, being a
+   * virtual user.
+   * @return a user in Silverpeas or nothing if this user is the JCR system one.
    */
   public User getUser() {
     return this.user;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final SilverpeasUserPrincipal that = (SilverpeasUserPrincipal) o;
+    return Objects.equals(this.user, that.user);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(user);
+  }
+
+  /**
+   * Is this principal represents the JCR system user?
+   * @return true if this principal is on the system user in JCR.
+   */
+  public boolean isSystem() {
+    return user.isSystem();
   }
 }

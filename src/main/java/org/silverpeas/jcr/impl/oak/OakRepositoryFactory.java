@@ -14,6 +14,7 @@ import org.silverpeas.jcr.impl.oak.factories.DocumentNodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.MemoryNodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.NodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.SegmentNodeStoreFactory;
+import org.silverpeas.jcr.impl.oak.security.SilverpeasSecurityProvider;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -42,13 +43,13 @@ public class OakRepositoryFactory implements RepositoryFactory {
 
   private final Map<StorageType, Supplier<NodeStoreFactory>>
       nodeStoreBuilders = Map.of(
-          StorageType.MEMORY_NODE_STORE, MemoryNodeStoreFactory::new,
-          StorageType.SEGMENT_NODE_STORE, SegmentNodeStoreFactory::new,
-          StorageType.DOCUMENT_NODE_STORE, DocumentNodeStoreFactory::new,
-          StorageType.COMPOSITE_NODE_STORE, () -> (s, c) -> {
-            throw new NotSupportedException("The composite node storage isn't yet supported!");
-          }
-      );
+      StorageType.MEMORY_NODE_STORE, MemoryNodeStoreFactory::new,
+      StorageType.SEGMENT_NODE_STORE, SegmentNodeStoreFactory::new,
+      StorageType.DOCUMENT_NODE_STORE, DocumentNodeStoreFactory::new,
+      StorageType.COMPOSITE_NODE_STORE, () -> (s, c) -> {
+        throw new NotSupportedException("The composite node storage isn't yet supported!");
+      }
+  );
 
   private final Function<StorageType, NodeStoreFactory> invalidNodeStore = t -> (s, c) -> {
     SilverLogger.getLogger(this).error("Invalid storage type: " + t);
@@ -69,7 +70,8 @@ public class OakRepositoryFactory implements RepositoryFactory {
               () -> invalidNodeStore.apply(conf.getStorageType()))
           .get().create(jcrHomePath, conf);
       if (nodeStore != null) {
-        return new Jcr(new Oak(nodeStore)).createRepository();
+        return new Jcr(new Oak(nodeStore)).with(new SilverpeasSecurityProvider())
+            .createRepository();
       }
       return null;
     } catch (SilverpeasRuntimeException | IOException e) {

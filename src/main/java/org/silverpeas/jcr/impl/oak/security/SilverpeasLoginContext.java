@@ -24,8 +24,12 @@
 
 package org.silverpeas.jcr.impl.oak.security;
 
+import org.apache.jackrabbit.oak.api.AuthInfo;
+import org.apache.jackrabbit.oak.spi.security.authentication.AuthInfoImpl;
 import org.apache.jackrabbit.oak.spi.security.authentication.LoginContext;
 import org.silverpeas.jcr.security.LoginModuleRegistry;
+import org.silverpeas.jcr.security.SilverpeasJCRLoginModule;
+import org.silverpeas.jcr.security.SilverpeasUserPrincipal;
 
 import javax.jcr.Credentials;
 import javax.security.auth.Subject;
@@ -34,6 +38,7 @@ import javax.security.auth.spi.LoginModule;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Context of a login/logout to the JCR repository by a user within the scope of Silverpeas out of
@@ -44,23 +49,25 @@ import java.util.Map;
  * {@link javax.security.auth.spi.LoginModule} instances that support such a credentials. It chains
  * then their invocation to perform the actual operation of login/logout until a {@link LoginModule}
  * instance responds successfully. When an authentication succeeds, the context expects through the
- * {@link LoginModule#commit()} method the subject to be enriched with the {@link
- * java.security.Principal} that identifies the authenticated user. Otherwise a {@link
- * LoginException} is thrown.
+ * {@link LoginModule#commit()} method the subject to be enriched with the
+ * {@link java.security.Principal} that identifies the authenticated user. Otherwise a
+ * {@link LoginException} is thrown.
  * </p>
  * <p>
- * The {@link LoginModule} instances to consider for a given credentials are provided by the {@link
- * LoginModuleRegistry} object. So, any {@link LoginModule} defined for JCR authentication have to
- * register themselves to this registry by indicating the type of credentials they support.
+ * The {@link LoginModule} instances to consider for a given credentials are provided by the
+ * {@link LoginModuleRegistry} object. So, any {@link LoginModule} defined for JCR authentication
+ * have to register themselves to this registry by indicating the type of credentials they support.
  * </p>
  * @author mmoquillon
  */
 public class SilverpeasLoginContext implements LoginContext {
 
   private final Subject subject;
+  private final SilverpeasCallbackHandler callbackHandler;
 
-  SilverpeasLoginContext(final Subject subject) {
+  SilverpeasLoginContext(final Subject subject, final SilverpeasCallbackHandler callbackHandler) {
     this.subject = subject;
+    this.callbackHandler = callbackHandler;
   }
 
   @Override
@@ -70,7 +77,22 @@ public class SilverpeasLoginContext implements LoginContext {
 
   @Override
   public void login() throws LoginException {
-    applyOnLoginModule(l -> l.login() && l.commit());
+    applyOnLoginModule(l -> {
+      boolean status = l.login() && l.commit();
+      if (status) {
+        // we add AuthInfo for Oak SessionImpl to figuring out the userID mapped with the current
+        // opened session (this for avoiding the fallback mechanism). This is required for reentrant
+        // session mechanism.
+        Set<SilverpeasUserPrincipal> principals =
+            subject.getPrincipals(SilverpeasUserPrincipal.class);
+        if (!principals.isEmpty()) {
+          SilverpeasUserPrincipal principal = principals.iterator().next();
+          AuthInfo authInfo = new AuthInfoImpl(principal.getUser().getId(), null, principals);
+          subject.getPublicCredentials().add(authInfo);
+        }
+      }
+      return status;
+    });
   }
 
   @Override
@@ -83,7 +105,8 @@ public class SilverpeasLoginContext implements LoginContext {
     if (credentials == null) {
       throw new LoginException("No credentials!");
     }
-    List<LoginModule> modules = getLoginModuleRegistry().getLoginModule(credentials.getClass());
+    List<SilverpeasJCRLoginModule> modules =
+        getLoginModuleRegistry().getLoginModule(credentials.getClass());
     if (modules.isEmpty()) {
       throw new LoginException("Unsupported credentials: " + credentials.getClass()
           .getName());
@@ -92,8 +115,10 @@ public class SilverpeasLoginContext implements LoginContext {
     Map<String, ?> options = new HashMap<>();
     boolean succeeded = false;
     for (int i = 0; i < modules.size() && !succeeded; i++) {
-      LoginModule module = modules.get(i);
-      module.initialize(getSubject(), null, sharedState, options);
+      SilverpeasJCRLoginModule module = modules.get(i);
+      if (!module.isInitialized()) {
+        module.initialize(getSubject(), callbackHandler, sharedState, options);
+      }
       succeeded = operation.check(module);
     }
     if (!succeeded) {
@@ -103,11 +128,7 @@ public class SilverpeasLoginContext implements LoginContext {
   }
 
   private Credentials getCredentials() {
-    var allCredentials = subject.getPrivateCredentials();
-    if (allCredentials.isEmpty()) {
-      return null;
-    }
-    return (Credentials) allCredentials.iterator().next();
+    return callbackHandler.getCredentials();
   }
 
   private LoginModuleRegistry getLoginModuleRegistry() {

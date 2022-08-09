@@ -104,7 +104,7 @@ public class OakRepositoryConfiguration {
    * @return a {@link SegmentNodeStoreConfiguration} instance with the properties to initialize the
    * {@link javax.jcr.Repository} instance.
    */
-  public SegmentNodeStoreConfiguration getSegmentNodeStore() {
+  public SegmentNodeStoreConfiguration getSegmentNodeStoreConfiguration() {
     return segmentNodeStore;
   }
 
@@ -113,7 +113,7 @@ public class OakRepositoryConfiguration {
    * @return a {@link DocumentNodeStoreConfiguration} instance with the properties to initialize the
    * {@link javax.jcr.Repository} instance.
    */
-  public DocumentNodeStoreConfiguration getDocumentNodeStore() {
+  public DocumentNodeStoreConfiguration getDocumentNodeStoreConfiguration() {
     return documentNodeStore;
   }
 

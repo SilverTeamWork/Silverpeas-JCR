@@ -33,6 +33,7 @@ import org.silverpeas.core.test.extention.SystemProperty;
 import org.silverpeas.core.test.extention.TestManagedBeans;
 import org.silverpeas.core.test.extention.TestedBean;
 import org.silverpeas.jcr.impl.RepositorySettings;
+import org.silverpeas.jcr.security.SecurityTest;
 import org.silverpeas.test.TestUser;
 
 import javax.jcr.Node;
@@ -56,7 +57,7 @@ import static org.silverpeas.jcr.util.JCRConstants.*;
 @SystemProperty(key = RepositorySettings.JCR_HOME, value = JCR_HOME)
 @SystemProperty(key = RepositorySettings.JCR_CONF, value = OAK_CONFIG)
 @TestManagedBeans({RepositoryProvider.class})
-class SilverpeasJCRSchemaRegisterTest {
+class SilverpeasJCRSchemaRegisterTest extends SecurityTest {
 
   @TestedBean
   SilverpeasJCRSchemaRegister schemaRegister;

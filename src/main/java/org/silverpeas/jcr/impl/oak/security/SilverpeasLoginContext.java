@@ -31,19 +31,21 @@ import org.silverpeas.jcr.security.LoginModuleRegistry;
 import org.silverpeas.jcr.security.SilverpeasJCRLoginModule;
 import org.silverpeas.jcr.security.SilverpeasUserPrincipal;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Credentials;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Context of a login/logout to the JCR repository by a user within the scope of Silverpeas out of
  * any JAAS process as the security system of Silverpeas isn't built upon this framework.
- * Nevertheless, the JAAS logic in login/logout is respected (but not how it is performed).
+ * Nevertheless, the JAAS logic in login/logout is respected (but not how it is performed). Such a
+ * context is created each time a login to the JCR is invoked, and it is reused for the logout after
+ * what it is disposed.
  * <p>
  * At login or logout, it checks the type of credentials that is passed in order to invoke the
  * {@link javax.security.auth.spi.LoginModule} instances that support such a credentials. It chains
@@ -54,7 +56,7 @@ import java.util.Set;
  * {@link LoginException} is thrown.
  * </p>
  * <p>
- * The {@link LoginModule} instances to consider for a given credentials are provided by the
+ * The {@link LoginModule} instances to consider for a given credentials type are provided by the
  * {@link LoginModuleRegistry} object. So, any {@link LoginModule} defined for JCR authentication
  * have to register themselves to this registry by indicating the type of credentials they support.
  * </p>
@@ -64,6 +66,7 @@ public class SilverpeasLoginContext implements LoginContext {
 
   private final Subject subject;
   private final SilverpeasCallbackHandler callbackHandler;
+  private Set<SilverpeasJCRLoginModule> modules;
 
   SilverpeasLoginContext(final Subject subject, final SilverpeasCallbackHandler callbackHandler) {
     this.subject = subject;
@@ -84,11 +87,11 @@ public class SilverpeasLoginContext implements LoginContext {
         // opened session (this for avoiding the fallback mechanism). This is required for reentrant
         // session mechanism.
         Set<SilverpeasUserPrincipal> principals =
-            subject.getPrincipals(SilverpeasUserPrincipal.class);
+            getSubject().getPrincipals(SilverpeasUserPrincipal.class);
         if (!principals.isEmpty()) {
           SilverpeasUserPrincipal principal = principals.iterator().next();
           AuthInfo authInfo = new AuthInfoImpl(principal.getUser().getId(), null, principals);
-          subject.getPublicCredentials().add(authInfo);
+          getSubject().getPublicCredentials().add(authInfo);
         }
       }
       return status;
@@ -101,21 +104,13 @@ public class SilverpeasLoginContext implements LoginContext {
   }
 
   private void applyOnLoginModule(AuthOp operation) throws LoginException {
-    Credentials credentials = getCredentials();
-    if (credentials == null) {
-      throw new LoginException("No credentials!");
-    }
-    List<SilverpeasJCRLoginModule> modules =
-        getLoginModuleRegistry().getLoginModule(credentials.getClass());
-    if (modules.isEmpty()) {
-      throw new LoginException("Unsupported credentials: " + credentials.getClass()
-          .getName());
-    }
+    var credentials = getCredentials();
+    var iterator = getLoginModules(credentials.getClass()).iterator();
     Map<String, ?> sharedState = new HashMap<>();
     Map<String, ?> options = new HashMap<>();
     boolean succeeded = false;
-    for (int i = 0; i < modules.size() && !succeeded; i++) {
-      SilverpeasJCRLoginModule module = modules.get(i);
+    while (iterator.hasNext() && !succeeded) {
+      var module = iterator.next();
       if (!module.isInitialized()) {
         module.initialize(getSubject(), callbackHandler, sharedState, options);
       }
@@ -127,12 +122,42 @@ public class SilverpeasLoginContext implements LoginContext {
     }
   }
 
-  private Credentials getCredentials() {
-    return callbackHandler.getCredentials();
+  /**
+   * Gets the credentials of the user from the callback handler.
+   * @return the credentials of the user being authenticated.
+   * @throws LoginException if no credentials were provided for the authentication.
+   */
+  @Nonnull
+  private Credentials getCredentials() throws LoginException {
+    Credentials credentials = callbackHandler.getCredentials();
+    if (credentials == null) {
+      throw new LoginException("No credentials!");
+    }
+    return credentials;
   }
 
+  @Nonnull
   private LoginModuleRegistry getLoginModuleRegistry() {
     return LoginModuleRegistry.getInstance();
+  }
+
+  /**
+   * Gets the login modules that were registered to authenticate a user in Silverpeas.
+   * @param credentialsType the type of credentials the login module to return has to support.
+   * @return a set of login module able to process the specified credentials.
+   * @throws LoginException if no login module are found to process the given type of credentials.
+   */
+  @Nonnull
+  private Set<SilverpeasJCRLoginModule> getLoginModules(
+      @Nonnull Class<? extends Credentials> credentialsType) throws LoginException {
+    if (modules == null) {
+      modules = getLoginModuleRegistry().getLoginModule(credentialsType);
+      if (modules.isEmpty()) {
+        modules = null;
+        throw new LoginException("Unsupported credentials: " + credentialsType.getName());
+      }
+    }
+    return modules;
   }
 
   @FunctionalInterface

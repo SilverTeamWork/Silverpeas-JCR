@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -69,10 +70,10 @@ public class LoginModuleRegistry {
 
   @SuppressWarnings("unchecked")
   private LoginModuleRegistry() {
-    new SilverpeasSimpleJCRLoginModule().getSupportedCredentials()
+    SilverpeasSimpleJCRLoginModule.SUPPORTED_CREDENTIALS
         .forEach(c -> addLoginModule(c, SilverpeasSimpleJCRLoginModule.class));
 
-    new SilverpeasTokenJCRLoginModule().getSupportedCredentials()
+    SilverpeasTokenJCRLoginModule.SUPPORTED_CREDENTIALS
         .forEach(c -> addLoginModule(c, SilverpeasTokenJCRLoginModule.class));
   }
 
@@ -105,37 +106,33 @@ public class LoginModuleRegistry {
    * @return a list of {@link LoginModule} objects that can process the specified type of
    * credentials or an empty list if no one can take in charge this type of credentials.
    */
-  public List<SilverpeasJCRLoginModule> getLoginModule(
+  public Set<SilverpeasJCRLoginModule> getLoginModule(
       final Class<? extends Credentials> credentialsType) {
     return registry.getOrDefault(credentialsType, Collections.emptyList())
         .stream()
         .map(Supplier::get)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   private SilverpeasJCRLoginModule spawn(final Class<? extends SilverpeasJCRLoginModule> clazz) {
-    SimpleCache cache = CacheServiceProvider.getThreadCacheService().getCache();
-    return cache.computeIfAbsent(getClass().getSimpleName() + "#" + clazz.getName(),
-        SilverpeasJCRLoginModule.class, () -> {
-          PrivilegedExceptionAction<? extends SilverpeasJCRLoginModule> newLoginModule = () -> {
-            MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MethodHandles.Lookup
-                privateLookup = MethodHandles.privateLookupIn(clazz, lookup);
-            MethodType constructorType = MethodType.methodType(void.class);
-            MethodHandle constructor = privateLookup.findConstructor(clazz, constructorType);
-            try {
-              //noinspection
-              return (SilverpeasJCRLoginModule) constructor.invoke();
-            } catch (Throwable e) {
-              throw new SilverpeasRuntimeException(e);
-            }
-          };
+    PrivilegedExceptionAction<? extends SilverpeasJCRLoginModule> newLoginModule = () -> {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      MethodHandles.Lookup
+          privateLookup = MethodHandles.privateLookupIn(clazz, lookup);
+      MethodType constructorType = MethodType.methodType(void.class);
+      MethodHandle constructor = privateLookup.findConstructor(clazz, constructorType);
+      try {
+        //noinspection
+        return (SilverpeasJCRLoginModule) constructor.invoke();
+      } catch (Throwable e) {
+        throw new SilverpeasRuntimeException(e);
+      }
+    };
 
-          try {
-            return AccessController.doPrivileged(newLoginModule);
-          } catch (PrivilegedActionException e) {
-            throw new SilverpeasRuntimeException(e);
-          }
-        });
+    try {
+      return AccessController.doPrivileged(newLoginModule);
+    } catch (PrivilegedActionException e) {
+      throw new SilverpeasRuntimeException(e);
+    }
   }
 }

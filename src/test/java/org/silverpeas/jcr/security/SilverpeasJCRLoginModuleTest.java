@@ -24,7 +24,6 @@
 
 package org.silverpeas.jcr.security;
 
-import org.jboss.weld.executor.FixedThreadPoolExecutorServices;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,12 +44,7 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,48 +63,28 @@ class SilverpeasJCRLoginModuleTest extends SecurityTest {
       " method supported by Silverpeas")
   @MethodSource("getSupportedCredentials")
   void onlyOneLoginModuleShouldBeGetForEachSupportedCredentialsType(final Credentials credentials) {
-    List<SilverpeasJCRLoginModule> loginModules =
+    Set<SilverpeasJCRLoginModule> loginModules =
         LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass());
     assertThat(loginModules.size(), is(1));
 
     //noinspection rawtypes
-    Set<Class> supportedCredentials = getCredentialsSupportedBy(loginModules.get(0));
+    Set<Class> supportedCredentials = getCredentialsSupportedBy(loginModules.iterator().next());
     assertThat(supportedCredentials.size(), is(1));
     assertThat(supportedCredentials, contains(credentials.getClass()));
   }
 
   @Test
-  @DisplayName("The same login module instance should be provided each time within a single thead")
-  void sameLoginModuleInstanceInTheSameThread() {
+  @DisplayName("A different login module instances should be provided each time")
+  void differentLoginModuleInstances() {
     Credentials credentials = getAnyCredentials();
     LoginModule loginModule1 =
-        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
+        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).iterator().next();
 
     LoginModule loginModule2 =
-        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
+        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).iterator().next();
 
-    assertThat(loginModule1, is(loginModule2));
-  }
-
-  @Test
-  @DisplayName("A different login module instances should be provided for each thread")
-  void differentLoginModuleInstancesForEachThread()
-      throws ExecutionException, InterruptedException {
-    Credentials credentials = getAnyCredentials();
-
-    Callable<SilverpeasJCRLoginModule> loginModuleProvider =
-        () -> LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
-
-    FixedThreadPoolExecutorServices executors = new FixedThreadPoolExecutorServices(3);
-    ExecutorService executor = executors.getTaskExecutor();
-
-    Future<SilverpeasJCRLoginModule> future1 = executor.submit(loginModuleProvider);
-    Future<SilverpeasJCRLoginModule> future2 = executor.submit(loginModuleProvider);
-    Future<SilverpeasJCRLoginModule> future3 = executor.submit(loginModuleProvider);
-
-    assertThat(future1.get(), not(future2.get()));
-    assertThat(future1.get(), not(future3.get()));
-    assertThat(future2.get(), not(future3.get()));
+    assertThat(loginModule1.getClass(), is(loginModule2.getClass()));
+    assertThat(loginModule1, not(loginModule2));
   }
 
   @ParameterizedTest
@@ -118,7 +92,7 @@ class SilverpeasJCRLoginModuleTest extends SecurityTest {
   @MethodSource("getSupportedCredentials")
   void authenticateAUserByHisValidCredentials(final Credentials credentials) throws LoginException {
     LoginModule loginModule =
-        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
+        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).iterator().next();
     final Subject subject = new Subject();
     loginModule.initialize(subject, new TestCallBackHandler(credentials), new HashMap<>(),
         new HashMap<>());
@@ -136,7 +110,7 @@ class SilverpeasJCRLoginModuleTest extends SecurityTest {
   void authenticateSystemUser() throws LoginException {
     Credentials credentials = JCRUserCredentialsProvider.getJcrSystemCredentials();
     LoginModule loginModule =
-        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
+        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).iterator().next();
     final Subject subject = new Subject();
     loginModule.initialize(subject, new TestCallBackHandler(credentials), new HashMap<>(),
         new HashMap<>());
@@ -158,7 +132,7 @@ class SilverpeasJCRLoginModuleTest extends SecurityTest {
   @MethodSource("getInvalidCredentials")
   void authenticateAUserByInvalidCredentials(final Credentials credentials) {
     LoginModule loginModule =
-        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).get(0);
+        LoginModuleRegistry.getInstance().getLoginModule(credentials.getClass()).iterator().next();
     final Subject subject = new Subject();
     loginModule.initialize(subject, new TestCallBackHandler(credentials), new HashMap<>(),
         new HashMap<>());

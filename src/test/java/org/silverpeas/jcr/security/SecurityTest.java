@@ -189,8 +189,8 @@ public abstract class SecurityTest {
 
     when(userProvider.getSystemUser()).thenReturn(
         new TestUser.Builder()
-            .setId("-1").
-            setDomainId("0")
+            .setId("-1")
+            .setDomainId("0")
             .build());
   }
 

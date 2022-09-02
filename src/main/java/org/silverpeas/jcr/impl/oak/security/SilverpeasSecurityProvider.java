@@ -23,6 +23,11 @@
  */
 package org.silverpeas.jcr.impl.oak.security;
 
+import org.apache.jackrabbit.oak.plugins.tree.RootProvider;
+import org.apache.jackrabbit.oak.plugins.tree.TreeProvider;
+import org.apache.jackrabbit.oak.plugins.tree.impl.RootProviderService;
+import org.apache.jackrabbit.oak.plugins.tree.impl.TreeProviderService;
+import org.apache.jackrabbit.oak.spi.security.ConfigurationBase;
 import org.apache.jackrabbit.oak.spi.security.ConfigurationParameters;
 import org.apache.jackrabbit.oak.spi.security.SecurityConfiguration;
 import org.apache.jackrabbit.oak.spi.security.SecurityProvider;
@@ -31,7 +36,7 @@ import org.apache.jackrabbit.oak.spi.security.authorization.AuthorizationConfigu
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Security provider for the Oak implementation of the JCR. It provides the objects required by Oak
@@ -39,9 +44,8 @@ import java.util.List;
  * repository's content tree.
  * <p>
  * The security provider provides to Oak both a custom
- * {@link org.apache.jackrabbit.oak.spi.security.authentication.AuthenticationConfiguration}
- * and a custom
- * {@link org.apache.jackrabbit.oak.spi.security.authorization.AuthorizationConfiguration}
+ * {@link org.apache.jackrabbit.oak.spi.security.authentication.AuthenticationConfiguration} and a
+ * custom {@link org.apache.jackrabbit.oak.spi.security.authorization.AuthorizationConfiguration}
  * objects that defines the rules to apply when authenticating and authorizing a user accessing the
  * JCR repository. Those configuration objects define a bridge between the Oak implementation of the
  * JCR and the Silverpeas world.
@@ -49,6 +53,18 @@ import java.util.List;
  * @author mmoquillon
  */
 public class SilverpeasSecurityProvider implements SecurityProvider {
+
+  private final RootProvider rootProvider = new RootProviderService();
+  private final TreeProvider treeProvider = new TreeProviderService();
+  private final SilverpeasAuthenticationConfiguration authenticationConfig;
+  private final SilverpeasAuthorizationConfiguration authorizationConfig;
+
+  public SilverpeasSecurityProvider() {
+    this.authenticationConfig =
+        initDefaultConfiguration(new SilverpeasAuthenticationConfiguration());
+    this.authorizationConfig =
+        initDefaultConfiguration(new SilverpeasAuthorizationConfiguration(this));
+  }
 
   @Override
   @Nonnull
@@ -59,8 +75,7 @@ public class SilverpeasSecurityProvider implements SecurityProvider {
   @Override
   @Nonnull
   public Iterable<? extends SecurityConfiguration> getConfigurations() {
-    return List.of(new SilverpeasAuthenticationConfiguration(),
-        new SilverpeasAuthorizationConfiguration());
+    return Set.of(authenticationConfig, authorizationConfig);
   }
 
   @Override
@@ -68,11 +83,20 @@ public class SilverpeasSecurityProvider implements SecurityProvider {
   @Nonnull
   public <T> T getConfiguration(@Nonnull final Class<T> configClass) {
     if (AuthenticationConfiguration.class == configClass) {
-      return (T) new SilverpeasAuthenticationConfiguration();
+      return (T) authenticationConfig;
     } else if (AuthorizationConfiguration.class == configClass) {
-      return (T) new SilverpeasAuthorizationConfiguration();
+      return (T) authorizationConfig;
     } else {
       throw new IllegalArgumentException("Unsupported security configuration class " + configClass);
     }
+  }
+
+  private <T extends SecurityConfiguration> T initDefaultConfiguration(@Nonnull T config) {
+    if (config instanceof ConfigurationBase) {
+      ConfigurationBase cfg = (ConfigurationBase) config;
+      cfg.setRootProvider(rootProvider);
+      cfg.setTreeProvider(treeProvider);
+    }
+    return config;
   }
 }

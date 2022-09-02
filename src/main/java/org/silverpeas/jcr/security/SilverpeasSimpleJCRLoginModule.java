@@ -25,13 +25,17 @@
 package org.silverpeas.jcr.security;
 
 import org.silverpeas.core.admin.user.model.User;
+import org.silverpeas.core.annotation.Service;
+import org.silverpeas.core.annotation.Technical;
 import org.silverpeas.core.i18n.I18n;
+import org.silverpeas.core.initialization.Initialization;
 import org.silverpeas.core.security.authentication.Authentication;
 import org.silverpeas.core.security.authentication.AuthenticationCredential;
 import org.silverpeas.core.security.authentication.AuthenticationResponse;
 import org.silverpeas.core.security.authentication.exception.AuthenticationException;
 
 import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.login.LoginException;
@@ -39,22 +43,25 @@ import java.util.Arrays;
 import java.util.Set;
 
 /**
- * A login module to authenticate the users that access the JCR repository used by Silverpeas. This
- * login module takes {@link javax.jcr.SimpleCredentials} in which are set both the user connection
- * identifier and the associated password.
+ * A login module to authenticate the users who access the JCR repository used by Silverpeas. This
+ * login module accepts only {@link javax.jcr.SimpleCredentials} in which are set both the user
+ * connection identifier and the associated password.
  * <p>
- * The login module delegates the authentication itself to an authentication service that has the
- * knowledge of how to perform the authentication on behalf of Silverpeas.
+ * The login module delegates the authentication itself to an authentication service in Silverpeas
+ * that has the knowledge of how to perform the authentication on behalf of Silverpeas.
  * </p>
  * @author mmoquillon
  */
 public class SilverpeasSimpleJCRLoginModule extends SilverpeasJCRLoginModule {
 
   @SuppressWarnings("rawtypes")
+  static final Set<Class> SUPPORTED_CREDENTIALS = Set.of(SimpleCredentials.class);
+
+  @SuppressWarnings("rawtypes")
   @Override
   @Nonnull
   protected Set<Class> getSupportedCredentials() {
-    return Set.of(SimpleCredentials.class);
+    return SUPPORTED_CREDENTIALS;
   }
 
   @Override

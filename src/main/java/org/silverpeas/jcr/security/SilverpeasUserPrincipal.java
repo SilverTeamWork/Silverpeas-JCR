@@ -32,17 +32,26 @@ import java.util.Objects;
 
 /**
  * Principal representing a user accessing the JCR. This user can be either a user in Silverpeas or
- * the JCR system user. The JCR system user is a predefined one, and it is a virtual user. As such,
- * it represents no user in Silverpeas; so the {@link #getUser()} method returns nothing.?
+ * the JCR system user. The JCR system user is a predefined one, and it is a virtual user. To check
+ * if the user behind the scene is the system one, just invoke
+ * {@link SilverpeasUserPrincipal#isSystem()}.
  * @author mmoquillon
  */
 public class SilverpeasUserPrincipal implements Principal {
 
   private final User user;
+  private final AccessContext context;
 
-  SilverpeasUserPrincipal(@Nonnull final User user) {
+  public SilverpeasUserPrincipal(@Nonnull final User user) {
     Objects.requireNonNull(user);
     this.user = user;
+    this.context = AccessContext.EMPTY;
+  }
+
+  public SilverpeasUserPrincipal(@Nonnull final User user, final AccessContext context) {
+    Objects.requireNonNull(user);
+    this.user = user;
+    this.context = context;
   }
 
   @Override
@@ -58,6 +67,14 @@ public class SilverpeasUserPrincipal implements Principal {
    */
   public User getUser() {
     return this.user;
+  }
+
+  /**
+   * Gets the context under which the user denoted by this principal accesses the JCR.
+   * @return the access context of the underlying user.
+   */
+  public AccessContext getAccessContext() {
+    return context;
   }
 
   @Override

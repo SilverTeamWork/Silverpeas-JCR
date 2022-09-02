@@ -3,11 +3,13 @@ package org.silverpeas.jcr.security;
 import org.apache.jackrabbit.oak.spi.security.authentication.AbstractLoginModule;
 import org.silverpeas.core.admin.user.model.User;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.LoginException;
+import javax.security.auth.spi.LoginModule;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
@@ -15,6 +17,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Common classes for all {@link javax.security.auth.spi.LoginModule}s that takes in charge the
+ * authentication of a user accessing the Silverpeas JCR. This abstract class provides an
+ * implementation of the {@link LoginModule#login()}, {@link LoginModule#commit()} and
+ * {@link LoginModule#logout()} methods and for doing it expects the concrete classes to implement
+ * two methods: {@link SilverpeasJCRLoginModule#authenticateUser(Credentials)} to authenticate a
+ * user accessing the repository by his credentials, and
+ * {@link SilverpeasJCRLoginModule#getSupportedCredentials()} to indicate the type of credentials
+ * the {@link LoginModule} supports. Indeed, each {@link SilverpeasJCRLoginModule} class is defined
+ * for a given type of credentials which can require a specific way of authentication process. For
+ * instance, one {@link LoginModule} to authenticate a user by his tuple login/domain/password and
+ * another one to authenticate a user by his own API token. Once a user is authenticated, his
+ * profile (as a {@link User} instance) is then set within a {@link SilverpeasUserPrincipal} object.
+ * Because the content of the JCR is, in Silverpeas, is a sensitive data, anonymous authentication
+ * must be by default rejected. Only authentication of the system (or system user) can be accepted
+ * and as such it should be automatically represented by the virtual Silverpeas system user in the
+ * {@link SilverpeasUserPrincipal}.
+ */
 public abstract class SilverpeasJCRLoginModule extends AbstractLoginModule {
 
   private Credentials userId = null;
@@ -41,7 +61,8 @@ public abstract class SilverpeasJCRLoginModule extends AbstractLoginModule {
         // Use the credentials to authenticate the subject and then to produce the principal
         // required to access the JCR
         User user = authenticateUser(credentials);
-        principal = new SilverpeasUserPrincipal(user);
+        AccessContext context = getAccessContext(credentials);
+        principal = new SilverpeasUserPrincipal(user, context);
         success = true;
       }
 
@@ -110,6 +131,19 @@ public abstract class SilverpeasJCRLoginModule extends AbstractLoginModule {
    * @throws LoginException if the authentication of the user fails.
    */
   protected abstract User authenticateUser(final Credentials credentials) throws LoginException;
+
+  /**
+   * Gets the peculiar context under which the user behind the specified credentials accesses the
+   * JCR. The context has to be fetched through some attributes in the specified credentials. By
+   * default, this method returns {@link AccessContext#EMPTY} meaning no peculiar access context.
+   * @param credentials the credentials of the user in which some attributes have been set in order
+   * to define the current access context of the user.
+   * @return the current access context of the user. By default, no peculiar context.
+   */
+  @Nonnull
+  protected AccessContext getAccessContext(final Credentials credentials) {
+    return AccessContext.EMPTY;
+  }
 
   private boolean isCredentialsSupported(final Credentials credentials) {
     return getSupportedCredentials().stream().anyMatch(c -> c.isInstance(credentials));

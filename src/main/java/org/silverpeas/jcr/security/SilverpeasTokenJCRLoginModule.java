@@ -2,7 +2,6 @@ package org.silverpeas.jcr.security;
 
 import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
 import org.silverpeas.core.admin.user.model.User;
-import org.silverpeas.core.admin.user.service.UserProvider;
 import org.silverpeas.core.util.StringUtil;
 
 import javax.annotation.Nonnull;
@@ -35,7 +34,7 @@ public class SilverpeasTokenJCRLoginModule extends SilverpeasJCRLoginModule {
   protected User authenticateUser(final Credentials credentials)
       throws LoginException {
     String token = ((TokenCredentials) credentials).getToken();
-    User user = UserProvider.get().getUserByToken(token);
+    User user = User.provider().getUserByToken(token);
     if (user == null) {
       throw new LoginException("User API Token '" + token + "' non valid!");
     }

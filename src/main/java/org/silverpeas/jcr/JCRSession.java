@@ -26,7 +26,6 @@ package org.silverpeas.jcr;
 
 import org.apache.jackrabbit.api.security.authentication.token.TokenCredentials;
 import org.silverpeas.core.admin.user.model.User;
-import org.silverpeas.core.admin.user.service.UserProvider;
 import org.silverpeas.core.cache.model.SimpleCache;
 import org.silverpeas.core.cache.service.CacheServiceProvider;
 import org.silverpeas.core.security.authentication.AuthenticationCredential;
@@ -122,11 +121,11 @@ public class JCRSession implements Session, Closeable {
       } else {
         AuthenticationCredential authCred =
             JCRUserCredentialsProvider.getAuthCredentials((SimpleCredentials) credentials);
-        user = authCred != null ? UserProvider.get()
+        user = authCred != null ? User.provider()
             .getUserByLoginAndDomainId(authCred.getLogin(), authCred.getDomainId()) : null;
       }
     } else if (credentials instanceof TokenCredentials) {
-      user = UserProvider.get().getUserByToken(((TokenCredentials) credentials).getToken());
+      user = User.provider().getUserByToken(((TokenCredentials) credentials).getToken());
     } else {
       user = null;
     }
@@ -231,6 +230,7 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
+  @Deprecated
   public Node getNodeByUUID(final String uuid) throws RepositoryException {
     return session.getNodeByIdentifier(uuid);
   }
@@ -404,6 +404,7 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
+  @Deprecated
   public void addLockToken(final String lt) {
     try {
       session.getWorkspace().getLockManager().addLockToken(lt);
@@ -413,6 +414,7 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
+  @Deprecated
   public String[] getLockTokens() {
     try {
       return session.getWorkspace().getLockManager().getLockTokens();
@@ -423,6 +425,7 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
+  @Deprecated
   public void removeLockToken(final String lt) {
     try {
       session.getWorkspace().getLockManager().removeLockToken(lt);

@@ -27,6 +27,7 @@ package org.silverpeas.jcr;
 import org.apache.jackrabbit.commons.cnd.CndImporter;
 import org.silverpeas.core.annotation.Service;
 import org.silverpeas.core.initialization.Initialization;
+import org.silverpeas.core.util.logging.SilverLogger;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -52,6 +53,7 @@ public class SilverpeasJCRSchemaRegister implements Initialization {
 
     try (InputStreamReader reader = new InputStreamReader(schema, StandardCharsets.UTF_8);
          JCRSession session = JCRSession.openSystemSession()) {
+      SilverLogger.getLogger(this).info("Silverpeas specific JCR schema registering...");
       CndImporter.registerNodeTypes(reader, session);
     }
   }

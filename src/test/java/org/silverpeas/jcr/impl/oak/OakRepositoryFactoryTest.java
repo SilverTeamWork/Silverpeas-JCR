@@ -27,6 +27,7 @@ package org.silverpeas.jcr.impl.oak;
 import org.apache.jackrabbit.oak.jcr.repository.RepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.silverpeas.core.test.UnitTest;
 import org.silverpeas.jcr.impl.RepositorySettings;
 
 import javax.jcr.Repository;
@@ -43,6 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * repository creation is asked with the Silverpeas settings.
  * @author mmoquillon
  */
+@UnitTest
 class OakRepositoryFactoryTest {
 
   private static final String JCR_HOME = "target/";

@@ -26,6 +26,7 @@ package org.silverpeas.jcr;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.silverpeas.core.test.UnitTest;
 import org.silverpeas.jcr.impl.oak.OakRepositoryFactory;
 
 import javax.jcr.RepositoryFactory;
@@ -40,6 +41,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
  * Java Service Provider API.
  * @author mmoquillon
  */
+@UnitTest
 class RepositoryFactoryLoadingTest {
 
   @Test

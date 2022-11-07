@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.silverpeas</groupId>
     <artifactId>silverpeas-project</artifactId>
-    <version>1.5-feature-12866</version>
+    <version>1.6-SNAPSHOT</version>
   </parent>
 
   <groupId>org.silverpeas.jcr</groupId>
@@ -59,7 +59,7 @@
     <!-- property used by the CI to both deploy a build version and release the next stable version -->
     <next.release>1.0</next.release>
     <!-- required minimum version of Silverpeas API on which the project depends -->
-    <silverpeas.version>6.3-feature-12866</silverpeas.version>
+    <silverpeas.version>6.4-feature12866</silverpeas.version>
     <!-- version of oak as JCR implementation -->
     <oak.version>1.44.0</oak.version>
     <!-- version of Netty to be used by Oak instead of its own dependencies on this framework -->

@@ -79,6 +79,7 @@ public class RepositoryProvider {
     };
     Repository jcr = ServiceLoader.load(RepositoryFactory.class).stream()
         .map(ServiceLoader.Provider::get)
+        .filter(SilverpeasRepositoryFactory.class::isInstance)
         .map(getRepository)
         .filter(Objects::nonNull)
         .findFirst()

@@ -7,6 +7,7 @@ import org.silverpeas.core.NotSupportedException;
 import org.silverpeas.core.SilverpeasRuntimeException;
 import org.silverpeas.core.util.StringUtil;
 import org.silverpeas.core.util.logging.SilverLogger;
+import org.silverpeas.jcr.SilverpeasRepositoryFactory;
 import org.silverpeas.jcr.impl.RepositorySettings;
 import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
 import org.silverpeas.jcr.impl.oak.configuration.StorageType;
@@ -39,7 +40,7 @@ import java.util.function.Supplier;
  *   parameters.</li>
  * </ul>
  */
-public class OakRepositoryFactory implements RepositoryFactory {
+public class OakRepositoryFactory implements SilverpeasRepositoryFactory {
 
   private final Map<StorageType, Supplier<NodeStoreFactory>>
       nodeStoreBuilders = Map.of(

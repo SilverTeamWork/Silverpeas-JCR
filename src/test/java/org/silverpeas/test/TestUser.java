@@ -210,6 +210,11 @@ public class TestUser implements User {
   }
 
   @Override
+  public boolean isPlayingAdminRole(final String s) {
+    return false;
+  }
+
+  @Override
   public UserState getState() {
     return UserState.VALID;
   }

@@ -26,34 +26,31 @@ package org.silverpeas.jcr;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.silverpeas.core.admin.user.model.SilverpeasRole;
 import org.silverpeas.core.admin.user.model.User;
-import org.silverpeas.core.test.extention.EnableSilverTestEnv;
 import org.silverpeas.core.test.extention.SystemProperty;
 import org.silverpeas.core.test.extention.TestManagedBeans;
 import org.silverpeas.core.test.extention.TestedBean;
+import org.silverpeas.jcr.JCRUtil.NodeDocProperties;
 import org.silverpeas.jcr.impl.RepositorySettings;
 import org.silverpeas.jcr.security.SecurityTest;
 import org.silverpeas.test.TestUser;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import java.util.Calendar;
 import java.util.Date;
 
-import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
+import static javax.jcr.nodetype.NodeType.NT_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.silverpeas.jcr.JCRUtil.fillDocumentNode;
+import static org.silverpeas.jcr.JCRUtil.fillFileNode;
 import static org.silverpeas.jcr.RepositoryProviderTest.JCR_HOME;
 import static org.silverpeas.jcr.RepositoryProviderTest.OAK_CONFIG;
-import static org.silverpeas.jcr.util.JCRConstants.*;
+import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_SIMPLE_ATTACHMENT;
+import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_SIMPLE_DOCUMENT;
 
 /**
  * Test the registering of the JCR schema for Silverpeas use.
  * @author mmoquillon
  */
-@EnableSilverTestEnv
 @SystemProperty(key = RepositorySettings.JCR_HOME, value = JCR_HOME)
 @SystemProperty(key = RepositorySettings.JCR_CONF, value = OAK_CONFIG)
 @TestManagedBeans({RepositoryProvider.class})
@@ -85,42 +82,32 @@ class SilverpeasJCRSchemaRegisterTest extends SecurityTest {
         Node root = session.getRootNode();
         Node componentInstance = root.addNode(instanceId, NT_FOLDER);
         Node nodeType = componentInstance.addNode("attachments", NT_FOLDER);
+
         Node simpleDoc = nodeType.addNode("simpledoc_42", SLV_SIMPLE_DOCUMENT);
-        simpleDoc.setProperty(SLV_PROPERTY_FOREIGN_KEY, "12");
-        simpleDoc.setProperty(SLV_PROPERTY_VERSIONED, false);
-        simpleDoc.setProperty(SLV_PROPERTY_ORDER, 0);
-        simpleDoc.setProperty(SLV_PROPERTY_OLD_ID, "666");
-        simpleDoc.setProperty(SLV_PROPERTY_INSTANCEID, instanceId);
-        simpleDoc.setProperty(SLV_PROPERTY_OWNER, user.getId());
-        simpleDoc.setProperty(SLV_PROPERTY_COMMENT, "");
-        simpleDoc.setProperty(SLV_PROPERTY_STATUS, "0");
-        simpleDoc.setProperty(SLV_PROPERTY_ALERT_DATE, convertToJCRValue(session, new Date()));
-        simpleDoc.setProperty(SLV_PROPERTY_EXPIRY_DATE, convertToJCRValue(session, new Date()));
-        simpleDoc.setProperty(SLV_PROPERTY_RESERVATION_DATE,
-            convertToJCRValue(session, new Date()));
-        simpleDoc.setProperty(SLV_PROPERTY_CLONE, "");
+        NodeDocProperties docProps = new NodeDocProperties(instanceId, user)
+            .setDisplayable(true)
+            .setDownloadable(true)
+            .setDate(new Date())
+            .setVersionable(true)
+            .setForeignKey("12")
+            .setOldId("666");
+        Node filledSimpleDoc = fillDocumentNode(session, docProps, simpleDoc);
 
-        //downloadable mixin
-        simpleDoc.addMixin(SLV_DOWNLOADABLE_MIXIN);
-        simpleDoc.setProperty(SLV_PROPERTY_FORBIDDEN_DOWNLOAD_FOR_ROLES,
-            SilverpeasRole.asString(SilverpeasRole.READER_ROLES));
-
-        // viewable mixin
-        simpleDoc.addMixin(SLV_VIEWABLE_MIXIN);
-        simpleDoc.setProperty(SLV_PROPERTY_DISPLAYABLE_AS_CONTENT, true);
-
-        // versionable mixin
-        simpleDoc.addMixin(MIX_SIMPLE_VERSIONABLE);
+        Node file = filledSimpleDoc.addNode("file_en", SLV_SIMPLE_ATTACHMENT);
+        JCRUtil.NodeFileProperties fileProps =
+            new JCRUtil.NodeFileProperties("SmalltalkForever.pdf", docProps.getDate(), user)
+                .setLastModificationDate(docProps.getDate())
+                .setLastModifier(user)
+                .setFormId("-1")
+                .setTitle("Smalltalk Forever")
+                .setDescription("All about this wonderful language")
+                .setMimeType("application/pdf")
+                .setLanguage("en")
+                .setSize(378883L);
+        fillFileNode(session, fileProps, file);
 
         session.save();
       }
     });
-  }
-
-  private Value convertToJCRValue(final Session session, final Date date)
-      throws RepositoryException {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(date);
-    return session.getValueFactory().createValue(calendar);
   }
 }

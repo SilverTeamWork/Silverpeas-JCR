@@ -75,7 +75,7 @@ class OakRepositoryConfigurationTest {
     SegmentNodeStoreConfiguration segmentStoreConf =
         configuration.getSegmentNodeStoreConfiguration();
     // specific settings
-    assertThat(segmentStoreConf.getRepositoryHome(), is("/home/silverpeas/data/jcr"));
+    assertThat(segmentStoreConf.getStoragePath(), is("segmentstore"));
     // default values
     assertThat(segmentStoreConf.getTarMaxSize(),
         is(SegmentNodeStoreConfiguration.DefaultValues.MAX_TAR_SIZE));

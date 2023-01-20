@@ -26,76 +26,14 @@ package org.silverpeas.jcr.util;
 import javax.jcr.Property;
 
 /**
- * JCR Properties required by the Silverpeas use of the JCR repository.
+ * JCR property specific to Silverpeas to set also on nodes information related to the contributions
+ * stored in Silverpeas.
  * @author Emmanuel Hugonnet
  */
 @SuppressWarnings("unused")
-public interface JCRConstants extends Property {
+public interface SilverpeasProperty extends Property {
 
-  /**
-   * nt:base
-   */
-  String NT_BASE = "nt:base";
-  /**
-   * nt:childNodeDefinition
-   */
-  String NT_CHILD_NODE_DEFINITION = "nt:childNodeDefinition";
-  /**
-   * nt:file
-   */
-  String NT_FILE = "nt:file";
-  /**
-   * nt:folder
-   */
-  String NT_FOLDER = "nt:folder";
-  /**
-   * nt:frozenNode
-   */
-  String NT_FROZEN_NODE = "nt:frozenNode";
-  /**
-   * nt:hierarchyNode
-   */
-  String NT_HIERARCHY_NODE = "nt:hierarchyNode";
-  /**
-   * nt:linkedFile
-   */
-  String NT_LINKED_FILE = "nt:linkedFile";
-  /**
-   * nt:nodeType
-   */
-  String NT_NODE_TYPE = "nt:nodeType";
-  /**
-   * nt:propertyDefinition
-   */
-  String NT_PROPERTY_DEFINITION = "nt:propertyDefinition";
-  /**
-   * nt:query
-   */
-  String NT_QUERY = "nt:query";
-  /**
-   * nt:resource
-   */
-  String NT_RESOURCE = "nt:resource";
-  /**
-   * nt:unstructured
-   */
-  String NT_UNSTRUCTURED = "nt:unstructured";
-  /**
-   * nt:version
-   */
-  String NT_VERSION = "nt:version";
-  /**
-   * nt:versionHistory
-   */
-  String NT_VERSION_HISTORY = "nt:versionHistory";
-  /**
-   * nt:versionLabels
-   */
-  String NT_VERSION_LABELS = "nt:versionLabels";
-  /**
-   * nt:versionedChild
-   */
-  String NT_VERSIONED_CHILD = "nt:versionedChild";
+
   /**
    * Prefix for Silverpeas namespace.
    */

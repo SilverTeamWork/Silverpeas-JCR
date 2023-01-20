@@ -1,9 +1,7 @@
 package org.silverpeas.jcr.impl.oak;
 
-import org.apache.jackrabbit.oak.Oak;
-import org.apache.jackrabbit.oak.jcr.Jcr;
+import org.apache.jackrabbit.api.JackrabbitRepository;
 import org.apache.jackrabbit.oak.spi.state.NodeStore;
-import org.silverpeas.core.NotSupportedException;
 import org.silverpeas.core.SilverpeasRuntimeException;
 import org.silverpeas.core.util.StringUtil;
 import org.silverpeas.core.util.logging.SilverLogger;
@@ -11,18 +9,16 @@ import org.silverpeas.jcr.SilverpeasRepositoryFactory;
 import org.silverpeas.jcr.impl.RepositorySettings;
 import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
 import org.silverpeas.jcr.impl.oak.configuration.StorageType;
+import org.silverpeas.jcr.impl.oak.factories.CompositeNodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.DocumentNodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.MemoryNodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.NodeStoreFactory;
 import org.silverpeas.jcr.impl.oak.factories.SegmentNodeStoreFactory;
-import org.silverpeas.jcr.impl.oak.security.SilverpeasSecurityProvider;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.RepositoryFactory;
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -43,19 +39,12 @@ import java.util.function.Supplier;
 public class OakRepositoryFactory implements SilverpeasRepositoryFactory {
 
   private final Map<StorageType, Supplier<NodeStoreFactory>>
-      nodeStoreBuilders = Map.of(
+      nodeStoreFactories = Map.of(
       StorageType.MEMORY_NODE_STORE, MemoryNodeStoreFactory::new,
       StorageType.SEGMENT_NODE_STORE, SegmentNodeStoreFactory::new,
       StorageType.DOCUMENT_NODE_STORE, DocumentNodeStoreFactory::new,
-      StorageType.COMPOSITE_NODE_STORE, () -> (s, c) -> {
-        throw new NotSupportedException("The composite node storage isn't yet supported!");
-      }
+      StorageType.COMPOSITE_NODE_STORE, CompositeNodeStoreFactory::new
   );
-
-  private final Function<StorageType, NodeStoreFactory> invalidNodeStore = t -> (s, c) -> {
-    SilverLogger.getLogger(this).error("Invalid storage type: " + t);
-    return null;
-  };
 
   @Override
   public Repository getRepository(final Map parameters) throws RepositoryException {
@@ -67,17 +56,36 @@ public class OakRepositoryFactory implements SilverpeasRepositoryFactory {
       }
 
       OakRepositoryConfiguration conf = OakRepositoryConfiguration.load(confPath);
-      NodeStore nodeStore = nodeStoreBuilders.getOrDefault(conf.getStorageType(),
-              () -> invalidNodeStore.apply(conf.getStorageType()))
-          .get().create(jcrHomePath, conf);
-      if (nodeStore != null) {
-        return new Jcr(new Oak(nodeStore)).with(new SilverpeasSecurityProvider())
-            .createRepository();
-      }
-      return null;
+      NodeStoreFactory nodeStoreFactory = nodeStoreFactories.getOrDefault(conf.getStorageType(),
+          InvalidNodeStoreFactory::new).get();
+      return OakRepository.createConnection(nodeStoreFactory).connect(jcrHomePath, conf);
     } catch (SilverpeasRuntimeException | IOException e) {
       throw new RepositoryException(e);
     }
   }
 
+  @Override
+  public void closeRepository(final Repository repository) {
+    if (repository instanceof OakRepository) {
+      ((OakRepository) repository).shutdown();
+    } else if (repository instanceof JackrabbitRepository) {
+      ((JackrabbitRepository) repository).shutdown();
+    } else {
+      throw new IllegalArgumentException(
+          "The specified repository wasn't created by this factory!");
+    }
+  }
+
+  private static class InvalidNodeStoreFactory implements NodeStoreFactory {
+    @Override
+    public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
+      SilverLogger.getLogger(this).error("Invalid storage type: " + conf.getStorageType());
+      return null;
+    }
+
+    @Override
+    public void dispose(final NodeStore store) {
+      // nothing to do
+    }
+  }
 }

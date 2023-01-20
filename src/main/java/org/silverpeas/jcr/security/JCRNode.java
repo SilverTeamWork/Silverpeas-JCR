@@ -32,8 +32,8 @@ import java.util.stream.Stream;
 
 import static org.apache.jackrabbit.JcrConstants.NT_FILE;
 import static org.apache.jackrabbit.JcrConstants.NT_FOLDER;
-import static org.silverpeas.jcr.util.JCRConstants.SLV_OWNABLE_MIXIN;
-import static org.silverpeas.jcr.util.JCRConstants.SLV_PROPERTY_OWNER;
+import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_OWNABLE_MIXIN;
+import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_PROPERTY_OWNER;
 
 /**
  * A Node in the JCR. The JCR is structured like a tree in which content and administrative and

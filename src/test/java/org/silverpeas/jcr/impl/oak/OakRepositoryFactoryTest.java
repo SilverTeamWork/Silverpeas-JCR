@@ -62,6 +62,6 @@ class OakRepositoryFactoryTest {
     OakRepositoryFactory factory = new OakRepositoryFactory();
     Repository repository = factory.getRepository(parameters);
     assertThat(repository, notNullValue());
-    assertThat(repository, is(instanceOf(RepositoryImpl.class)));
+    assertThat(repository, is(instanceOf(OakRepository.class)));
   }
 }

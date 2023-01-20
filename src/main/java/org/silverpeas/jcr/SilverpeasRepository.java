@@ -31,13 +31,14 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 /**
- * Implementation of the {@link Repository} in Silverpeas.
+ * Implementation of the {@link Repository} in Silverpeas. The {@link SilverpeasRepository} objects
+ * are created by a {@link SilverpeasRepositoryFactory} instance.
  * <p>
  * It is in fact a wrapper of the actual {@link Repository} object used to access the JCR with the
  * goal to wrap the login/logout operations in order to implement a reentrant JCR session. Indeed,
  * in Silverpeas several accesses to the JCR can be performed within a single flow of treatment (and
  * hence a single thread) and these accesses can be asked by independent services. As these services
- * don't know what it is done out of their scope, they cannot know whether a session has been
+ * don't know what it was done out of their own scope, they cannot know whether a session has been
  * already opened with the JCR and hence ask for their own use to open a session. In order to avoid
  * inter-blocking and interleaving session, a mechanism of reentrant session is implemented in
  * Silverpeas with the aim to reuse an opened session within the same single thread.
@@ -48,11 +49,27 @@ import javax.jcr.Value;
  * of the repository (in Silverpeas, there is only one workspace).
  * @author mmoquillon
  */
-public class SilverpeasContentRepository implements Repository {
+public class SilverpeasRepository implements Repository {
 
   private final Repository repository;
 
-  SilverpeasContentRepository(final Repository repository) {
+  /**
+   * Wraps the specified repository to enrich it with a reentrant session mechanism.
+   * @param repository the repository created by the JCR implementation used in Silverpeas.
+   * @return a {@link SilverpeasRepository} instance.
+   */
+  static SilverpeasRepository wrap(final Repository repository) {
+    return repository instanceof SilverpeasRepository ?
+        (SilverpeasRepository) repository :
+        new SilverpeasRepository(repository);
+  }
+
+  /**
+   * Constructor to be used only by {@link SilverpeasRepository#wrap(Repository)} or by any
+   * subclasses of {@link SilverpeasRepository}.
+   * @param repository the JCR repository to wrap.
+   */
+  protected SilverpeasRepository(final Repository repository) {
     this.repository = repository;
   }
 
@@ -106,5 +123,13 @@ public class SilverpeasContentRepository implements Repository {
   @Override
   public JCRSession login() throws RepositoryException {
     return JCRSession.open(new GuestCredentials(), c -> repository.login());
+  }
+
+  /**
+   * Gets the wrapped repository.
+   * @return the JCR repository used in Silverpeas.
+   */
+  protected Repository getRepository() {
+    return repository;
   }
 }

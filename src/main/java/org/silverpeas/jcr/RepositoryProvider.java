@@ -26,16 +26,18 @@ package org.silverpeas.jcr;
 import org.silverpeas.core.SilverpeasRuntimeException;
 import org.silverpeas.core.annotation.Provider;
 import org.silverpeas.core.util.ServiceProvider;
+import org.silverpeas.core.util.logging.SilverLogger;
 import org.silverpeas.jcr.impl.RepositorySettings;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.RepositoryFactory;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 
@@ -53,7 +55,9 @@ import java.util.function.Function;
 @Provider
 public class RepositoryProvider {
 
-  private SilverpeasContentRepository repository;
+  private SilverpeasRepository repository;
+
+  private SilverpeasRepositoryFactory factory;
 
   /**
    * Gets an instance of the {@link RepositoryProvider}.
@@ -64,31 +68,41 @@ public class RepositoryProvider {
   }
 
   @PostConstruct
-  private void initRepository() {
+  private void openRepository() {
     RepositorySettings settings = new RepositorySettings();
     Map<String, String> parameters = new HashMap<>();
     parameters.put(RepositorySettings.JCR_HOME, settings.getJCRHomeDirectory());
     parameters.put(RepositorySettings.JCR_CONF, settings.getJCRConfigurationFile());
 
-    Function<RepositoryFactory, Repository> getRepository = f -> {
+    Function<RepositoryFactory, Repository> repositoryGetter = f -> {
       try {
         return f.getRepository(parameters);
       } catch (RepositoryException e) {
         throw new SilverpeasRuntimeException(e);
       }
     };
-    Repository jcr = ServiceLoader.load(RepositoryFactory.class).stream()
+    factory = ServiceLoader.load(RepositoryFactory.class).stream()
         .map(ServiceLoader.Provider::get)
         .filter(SilverpeasRepositoryFactory.class::isInstance)
-        .map(getRepository)
-        .filter(Objects::nonNull)
+        .map(SilverpeasRepositoryFactory.class::cast)
         .findFirst()
         .orElseThrow(() -> new SilverpeasRuntimeException("No JCR backend found!"));
-    repository = new SilverpeasContentRepository(jcr);
+
+    Repository jcr = Optional.ofNullable(repositoryGetter.apply(factory))
+        .orElseThrow(() -> new SilverpeasRuntimeException("No JCR backend found!"));
+
+    SilverLogger.getLogger(this).info("Open connection to the JCR");
+    repository = SilverpeasRepository.wrap(jcr);
+  }
+
+  @PreDestroy
+  private void closeRepository() {
+    SilverLogger.getLogger(this).info("Close connection to the JCR");
+    factory.closeRepository(repository);
   }
 
   @Produces
-  public SilverpeasContentRepository getRepository() {
+  public SilverpeasRepository getRepository() {
     return repository;
   }
 }

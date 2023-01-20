@@ -29,7 +29,8 @@ import java.util.Properties;
 
 /**
  * <p>
- * Configuration parameters of a document storage.
+ * Configuration parameters of a document storage. A document storage is dedicated to be used for
+ * applications requiring multiple access point to the storage like clustered services.
  * </p>
  * <p>
  * The Oak document storage is a database in which both node data and binaries are stored. Because
@@ -64,7 +65,7 @@ import java.util.Properties;
  * the native capabilities of MongoDocumentStore. H2DB, PostgreSQL, Microsoft SQL Server, and
  * Oracle are supported.
  * <p>
- * relies on JDBC, and thus, in general, can not create database instances (that said, certain
+ * It relies on JDBC, and thus, in general, can not create database instances (that said, certain
  * DBs such as Apache Derby or H2DB can create the database automatically when it's not there yet
  * - consult the DB documentation in general and the JDBC URL syntax specifically).
  * <p>
@@ -83,7 +84,8 @@ public class DocumentNodeStoreConfiguration extends NodeStoreConfiguration {
 
   /**
    * Default values of the different document node storage configuration parameters. Parameters that
-   * aren't set in the configuration file are automatically valued with these defaults values below.
+   * aren't set in the configuration file are automatically valued with these defaults values
+   * below.
    */
   public static class DefaultValues {
     public static final String DB_URI = "mongodb://localhost:27017";

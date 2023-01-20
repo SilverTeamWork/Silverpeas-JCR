@@ -68,7 +68,7 @@ public class JCRSession implements Session, Closeable {
    * a new session. It expects any session opening in a same thread are performed for the same user,
    * otherwise an {@link IllegalStateException} is throw.
    * <p>
-   * This method is dedicated to be used by the {@link SilverpeasContentRepository} instance when a
+   * This method is dedicated to be used by the {@link SilverpeasRepository} instance when a
    * login to the JCR is invoked; the login call is delegated to the {@link JCRSession} with the
    * given {@link JCRLogin} function.
    * @param login the JCR login mechanism from which a new user session is obtained.
@@ -148,7 +148,7 @@ public class JCRSession implements Session, Closeable {
    */
   @SuppressWarnings("unused")
   public static JCRSession openSystemSession() throws RepositoryException {
-    SilverpeasContentRepository repo = RepositoryProvider.get().getRepository();
+    SilverpeasRepository repo = RepositoryProvider.get().getRepository();
     Credentials credentials = JCRUserCredentialsProvider.getJcrSystemCredentials();
     return repo.login(credentials);
   }
@@ -170,7 +170,7 @@ public class JCRSession implements Session, Closeable {
   @SuppressWarnings("unused")
   public static JCRSession openUserSession(String login, String domainId, String password)
       throws RepositoryException {
-    SilverpeasContentRepository repo = RepositoryProvider.get().getRepository();
+    SilverpeasRepository repo = RepositoryProvider.get().getRepository();
     Credentials credentials =
         JCRUserCredentialsProvider.getUserCredentials(login, domainId, password);
     return repo.login(credentials);
@@ -464,7 +464,7 @@ public class JCRSession implements Session, Closeable {
 
   /**
    * Login function that embeds the actual login mechanism or call to the JCR. To be used by the
-   * {@link SilverpeasContentRepository} instances.
+   * {@link SilverpeasRepository} instances.
    */
   @FunctionalInterface
   interface JCRLogin {

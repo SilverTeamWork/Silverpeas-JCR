@@ -28,20 +28,31 @@ import org.apache.jackrabbit.oak.spi.state.NodeStore;
 import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
 
 /**
- * A factory of a {@link NodeStore} object. The concrete type of the node store is defined by the
- * repository configuration carried by a {@link OakRepositoryConfiguration} instance.
+ * A factory of a {@link NodeStore} objects. The concrete type of the node store is defined by the
+ * repository configuration brought by a {@link OakRepositoryConfiguration} instance. A
+ * {@link NodeStore} instance represents the storage the JCR repository will use as backend to store
+ * and retrieve data in the form of nodes.
  */
-@FunctionalInterface
 public interface NodeStoreFactory {
 
   /**
    * Creates a {@link NodeStore} instance according to the specified configuration parameters for
-   * the repository located at the given absolute path.
+   * the repository located at the given absolute path. The storage is opened and handled by the
+   * specified {@link NodeStore} instance.
    * @param jcrHomePath the absolute path of the home directory of the JCR.
-   * @param conf the JCR configuration with the parameters required to create and initialize the
-   * node storage.
+   * @param conf the JCR configuration with the parameters required to either create and initialize
+   * or to open the node storage.
    * @return a {@link NodeStore} instance or null if the parameters in the configuration doesn't
-   * match the type of node this factory is in charge of.
+   * match the type of node this factory is in charge of. The returned {@link NodeStore} instance is
+   * the object by which the access to the storage is performed.
    */
   NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf);
+
+  /**
+   * Disposes the specified {@link NodeStore} instance. The access to the related storage is then
+   * closed. It is very important to close the storage at the application shutdown otherwise the
+   * underlying storage can be in a stale state.
+   * @param store the {@link NodeStore} instance to dispose.
+   */
+  void dispose(final NodeStore store);
 }

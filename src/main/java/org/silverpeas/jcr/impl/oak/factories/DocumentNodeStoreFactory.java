@@ -65,14 +65,23 @@ public class DocumentNodeStoreFactory implements NodeStoreFactory {
 
   @Override
   public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
-    if (conf.getStorageType() != StorageType.DOCUMENT_NODE_STORE ||
+    if (conf.getStorageType() != StorageType.DOCUMENT_NODE_STORE &&
         conf.getStorageType() != StorageType.COMPOSITE_NODE_STORE) {
       return null;
     }
 
     DocumentNodeStoreConfiguration docNodeConf = conf.getDocumentNodeStoreConfiguration();
     return nodeStoreBuilders.getOrDefault(docNodeConf.getDocumentStoreType(), c -> null)
-        .apply(docNodeConf);
+            .apply(docNodeConf);
+  }
+
+  @Override
+  public void dispose(final NodeStore store) {
+    if (store instanceof DocumentNodeStore) {
+      ((DocumentNodeStore) store).dispose();
+    } else {
+      throw new IllegalArgumentException("The specified store isn't a DocumentNodeStore");
+    }
   }
 
   private DocumentNodeStore createMongoNodeStore(final DocumentNodeStoreConfiguration conf) {

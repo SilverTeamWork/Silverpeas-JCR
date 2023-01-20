@@ -41,7 +41,7 @@ import static org.silverpeas.jcr.RepositoryProviderTest.OAK_CONFIG;
 /**
  * Test a {@link javax.jcr.Repository} instance is well obtained by using a
  * {@link RepositoryProvider} instance and the provided object is an instance of the
- * {@link SilverpeasContentRepository} class.
+ * {@link SilverpeasRepository} class.
  * @author mmoquillon
  */
 @EnableSilverTestEnv
@@ -65,9 +65,9 @@ class RepositoryProviderTest {
   }
 
   @Test
-  @DisplayName("The repository provider should provide an instance of SilverpeasContentRepository")
+  @DisplayName("The repository provider should provide an instance of SilverpeasRepository")
   void provideARepository() {
-    SilverpeasContentRepository repository = provider.getRepository();
+    SilverpeasRepository repository = provider.getRepository();
     assertThat(repository, notNullValue());
   }
 }

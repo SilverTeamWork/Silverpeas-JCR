@@ -33,7 +33,9 @@ import java.util.Properties;
 
 /**
  * <p>
- * Configuration parameters of a segment storage.
+ * Configuration parameters of a segment storage. A segment storage, unlike the document storage,
+ * can be accessed by only a single entry point. It is dedicated to the standalone application
+ * requiring maximal performance.
  * </p>
  * <p>
  * Oak Segment Tar is an Oak storage backend that stores content as various types of records within
@@ -77,7 +79,8 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
 
   /**
    * Default values of the different segment node storage configuration parameters. Parameters that
-   * aren't set in the configuration file are automatically valued with these defaults values below.
+   * aren't set in the configuration file are automatically valued with these defaults values
+   * below.
    */
   public static class DefaultValues {
     public static final int MAX_TAR_SIZE = FileStoreBuilder.DEFAULT_MAX_FILE_SIZE;
@@ -106,14 +109,16 @@ public class SegmentNodeStoreConfiguration extends NodeStoreConfiguration {
   }
 
   /**
-   * Gets the absolute path on the file system where repository data will be stored. The Segment
-   * Store persists its data in a subdirectory of this home directory named
-   * <code>segmentstore</code> and the backups of the Node Store will be stored in a subdirectory
-   * of this home directory named <code>segmentstore-backup</code>.
-   * @return the absolute path of the JCR in the filesystem.
+   * Gets the path on the file system of the directory into which the repository content will be
+   * stored. In this directory, the content will be split into several segments, each of them being
+   * a TAR archive. By default, if not set, the Segment Store persists its data into the
+   * subdirectory <code>segmentstore</code> of the JCR home folder. This property allows the user to
+   * either indicate another name of the subdirectory or simply another absolute path.
+   * @return the path of the directory containing the repository content on the filesystem.
+   * By default the relarive path "segmentstore" to the JCR home directory.
    */
-  public String getRepositoryHome() {
-    return getString("segment.repository.home");
+  public String getStoragePath() {
+    return getString("segment.repository", "segmentstore");
   }
 
   /**

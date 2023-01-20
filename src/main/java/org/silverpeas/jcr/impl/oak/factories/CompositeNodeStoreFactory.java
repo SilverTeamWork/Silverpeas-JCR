@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000 - 2022 Silverpeas
+ * Copyright (C) 2000 - 2023 Silverpeas
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,24 +24,26 @@
 
 package org.silverpeas.jcr.impl.oak.factories;
 
-import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore;
 import org.apache.jackrabbit.oak.spi.state.NodeStore;
+import org.silverpeas.core.NotSupportedException;
 import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
 
 /**
- * Factory of a {@link MemoryNodeStore} instance. This is for the memory storage in Oak for testing
- * purpose.
+ * Factory of a CompositeNodeStore instance. This is to combine both document and segment storage.
+ * See the
+ * <a href="https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html">documentation</a>
+ * for more explanation about this storage. For instance, it isn't not supported by Silverpeas.
  * @author mmoquillon
  */
-public class MemoryNodeStoreFactory implements NodeStoreFactory {
+public class CompositeNodeStoreFactory implements NodeStoreFactory {
 
   @Override
   public NodeStore create(final String jcrHomePath, final OakRepositoryConfiguration conf) {
-    return new MemoryNodeStore();
+    throw new NotSupportedException("The composite node storage isn't yet supported!");
   }
 
   @Override
   public void dispose(final NodeStore store) {
-    // nothing to do here
+    throw new NotSupportedException("The composite node storage isn't yet supported!");
   }
 }

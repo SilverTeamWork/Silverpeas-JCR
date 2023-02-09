@@ -51,7 +51,7 @@ public interface SilverpeasProperty extends Property {
    */
   String SLV_SIMPLE_DOCUMENT = "slv:simpleDocument";
   /**
-   * Silverpeas versionning document versionnode qname.
+   * Silverpeas versioning document version node qname.
    */
   String SLV_SIMPLE_ATTACHMENT = "slv:simpleAttachment";
   /**

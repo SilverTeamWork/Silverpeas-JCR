@@ -24,7 +24,12 @@
 
 package org.silverpeas.jcr.impl.oak;
 
-import org.apache.jackrabbit.core.fs.local.FileUtil;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
+import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.transitions.Start;
 import org.apache.jackrabbit.value.BinaryImpl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,32 +49,32 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 
+import static de.flapdoodle.embed.mongo.distribution.Version.Main.V6_0;
 import static javax.jcr.Property.*;
 import static javax.jcr.nodetype.NodeType.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.silverpeas.jcr.impl.oak.SegmentStoreTest.JCR_HOME;
-import static org.silverpeas.jcr.impl.oak.SegmentStoreTest.OAK_CONFIG;
+import static org.silverpeas.jcr.impl.oak.DocumentStoreTest.JCR_HOME;
+import static org.silverpeas.jcr.impl.oak.DocumentStoreTest.OAK_CONFIG;
 
 /**
- * Unit test on the initialization of the JCR repository backed by a segment storage.
+ * Unit test on the initialization of the JCR repository backed by a document storage.
  * @author mmoquillon
  */
 @SystemProperty(key = RepositorySettings.JCR_HOME, value = JCR_HOME)
 @SystemProperty(key = RepositorySettings.JCR_CONF, value = OAK_CONFIG)
 @TestManagedBeans({RepositoryProvider.class})
-public class SegmentStoreTest extends SecurityTest {
+public class DocumentStoreTest extends SecurityTest {
 
   public static final String JCR_HOME = "/tmp/jcr";
-  public static final String OAK_CONFIG = "classpath:/silverpeas-oak-segment.properties";
+  public static final String OAK_CONFIG = "classpath:/silverpeas-oak-document.properties";
+
+  private static TransitionWalker.ReachedState<RunningMongodProcess> mongo;
 
   final User user = new TestUser.Builder()
       .setFirstName("Bart")
@@ -79,23 +84,28 @@ public class SegmentStoreTest extends SecurityTest {
       .build();
 
   @BeforeAll
-  public static void prepareFileStorage() throws IOException {
-    Path jcrHome = Path.of(JCR_HOME);
-    if (!Files.exists(jcrHome)) {
-      Files.createDirectories(jcrHome);
-    }
+  public static void startMongoDB() {
+    assertDoesNotThrow(() -> {
+      Net localhost = Net.builder()
+          .bindIp("localhost")
+          .port(27017)
+          .isIpv6(Network.localhostIsIPv6())
+          .build();
+      mongo = Mongod.instance()
+          .withNet(Start.to(Net.class).providedBy(() -> localhost))
+          .start(V6_0);
+      assertThat(mongo.current(), notNullValue());
+      assertThat(mongo.current().isAlive(), is(true));
+    });
   }
 
   @AfterAll
-  public static void purgeFileStorage() throws IOException {
-    Path jcrHome = Path.of(JCR_HOME);
-    if (Files.exists(jcrHome)) {
-      FileUtil.delete(jcrHome.toFile());
-    }
+  public static void stopMongoDB() {
+    mongo.close();
   }
 
   @Test
-  @DisplayName("Create a node into the JCR backed by a segment storage")
+  @DisplayName("Create a node into the JCR backed by a document storage")
   void createANode() {
     assertDoesNotThrow(() -> {
       try (JCRSession session = JCRSession.openSystemSession()) {
@@ -128,7 +138,7 @@ public class SegmentStoreTest extends SecurityTest {
   }
 
   @Test
-  @DisplayName("Create a versioned node into the JCR backed by a segment storage")
+  @DisplayName("Create a versioned node into the JCR backed by a document storage")
   void createAVersionedNode() {
     assertDoesNotThrow(() -> {
       try (JCRSession session = JCRSession.openSystemSession()) {

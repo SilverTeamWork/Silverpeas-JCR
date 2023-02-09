@@ -26,6 +26,7 @@ package org.silverpeas.jcr.impl.oak.factories;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.jackrabbit.oak.plugins.document.DocumentNodeStore;
 import org.apache.jackrabbit.oak.plugins.document.DocumentNodeStoreBuilder;
 import org.apache.jackrabbit.oak.plugins.document.LeaseCheckMode;
@@ -72,7 +73,7 @@ public class DocumentNodeStoreFactory implements NodeStoreFactory {
 
     DocumentNodeStoreConfiguration docNodeConf = conf.getDocumentNodeStoreConfiguration();
     return nodeStoreBuilders.getOrDefault(docNodeConf.getDocumentStoreType(), c -> null)
-            .apply(docNodeConf);
+        .apply(docNodeConf);
   }
 
   @Override
@@ -87,6 +88,10 @@ public class DocumentNodeStoreFactory implements NodeStoreFactory {
   private DocumentNodeStore createMongoNodeStore(final DocumentNodeStoreConfiguration conf) {
     DocumentNodeStoreBuilder<?> builder =
         MongoDocumentNodeStoreBuilder.newMongoDocumentNodeStoreBuilder()
+            // we use here a Guava executor (as it is by default by the builder). Perhaps we
+            // should use an executor from our own org.silverpeas.core.thread.ManagedThreadPool
+            // technical bean in which the threads pool of the underlying JEE server is used.
+            .setExecutor(MoreExecutors.newDirectExecutorService())
             .setMongoDB(conf.getUri(), conf.getDBName(), conf.getBlobCacheSize())
             .setSocketKeepAlive(conf.getSocketKeepAlive())
             .memoryCacheSize(conf.getCacheSize())

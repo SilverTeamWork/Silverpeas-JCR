@@ -25,17 +25,13 @@
 package org.silverpeas.jcr.security;
 
 import org.silverpeas.core.admin.user.model.User;
-import org.silverpeas.core.annotation.Service;
-import org.silverpeas.core.annotation.Technical;
 import org.silverpeas.core.i18n.I18n;
-import org.silverpeas.core.initialization.Initialization;
 import org.silverpeas.core.security.authentication.Authentication;
 import org.silverpeas.core.security.authentication.AuthenticationCredential;
 import org.silverpeas.core.security.authentication.AuthenticationResponse;
 import org.silverpeas.core.security.authentication.exception.AuthenticationException;
 
 import javax.annotation.Nonnull;
-import javax.inject.Singleton;
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 import javax.security.auth.login.LoginException;

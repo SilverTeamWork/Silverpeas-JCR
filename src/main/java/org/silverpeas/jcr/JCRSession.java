@@ -230,7 +230,6 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
-  @Deprecated
   public Node getNodeByUUID(final String uuid) throws RepositoryException {
     return session.getNodeByIdentifier(uuid);
   }
@@ -404,7 +403,6 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
-  @Deprecated
   public void addLockToken(final String lt) {
     try {
       session.getWorkspace().getLockManager().addLockToken(lt);
@@ -414,7 +412,6 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
-  @Deprecated
   public String[] getLockTokens() {
     try {
       return session.getWorkspace().getLockManager().getLockTokens();
@@ -425,7 +422,6 @@ public class JCRSession implements Session, Closeable {
   }
 
   @Override
-  @Deprecated
   public void removeLockToken(final String lt) {
     try {
       session.getWorkspace().getLockManager().removeLockToken(lt);

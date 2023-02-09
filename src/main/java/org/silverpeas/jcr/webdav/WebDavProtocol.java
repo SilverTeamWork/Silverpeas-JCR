@@ -1,7 +1,7 @@
 package org.silverpeas.jcr.webdav;
 
 /**
- * A class gathering the constants about the WebDAV protocol used in Silverpeas.
+ * A class gathering the constants about the custom WebDAV protocol used in Silverpeas.
  * @author mmoquillon
  */
 public final class WebDavProtocol {
@@ -10,12 +10,12 @@ public final class WebDavProtocol {
   }
 
   /**
-   * The WebDAV scheme protocol used by Silverpeas to edit online a document.
+   * The custom WebDAV scheme protocol used by Silverpeas to edit online a document.
    */
   public static final String WEBDAV_SCHEME = "spwebdav";
 
   /**
-   * The secured WebDAV scheme protocol used by Silverpeas to edit online a document.
+   * The custom secured WebDAV scheme protocol used by Silverpeas to edit online a document.
    */
   public static final String SECURED_WEBDAV_SCHEME = "spwebdavs";
 }

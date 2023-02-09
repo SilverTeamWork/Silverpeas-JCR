@@ -40,14 +40,12 @@ import org.apache.jackrabbit.oak.spi.state.NodeBuilder;
 import org.apache.jackrabbit.oak.spi.state.NodeState;
 import org.apache.jackrabbit.oak.spi.state.NodeStore;
 import org.silverpeas.core.SilverpeasRuntimeException;
-import org.silverpeas.core.util.StringUtil;
 import org.silverpeas.jcr.impl.oak.configuration.OakRepositoryConfiguration;
 import org.silverpeas.jcr.impl.oak.configuration.SegmentNodeStoreConfiguration;
 import org.silverpeas.jcr.impl.oak.configuration.StorageType;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;

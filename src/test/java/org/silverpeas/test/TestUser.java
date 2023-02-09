@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
- * Implementation of a user in Silverpeas
+ * Implementation of a user in Silverpeas dedicated to the tests.
  * @author mmoquillon
  */
 public class TestUser implements User {

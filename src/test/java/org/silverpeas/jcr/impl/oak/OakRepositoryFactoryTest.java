@@ -24,7 +24,6 @@
 
 package org.silverpeas.jcr.impl.oak;
 
-import org.apache.jackrabbit.oak.jcr.repository.RepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.silverpeas.core.test.UnitTest;

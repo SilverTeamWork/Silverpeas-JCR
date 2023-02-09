@@ -33,7 +33,7 @@ import org.apache.jackrabbit.webdav.simple.LocatorFactoryImplEx;
  *   <li>convert the URL of the accessed resource to the path of this
  *  resource in the JCR tree after extracting from the URL the repository and the workspace
  *  name</li>
- *   <li>convert the path of the resource in the JCR to an URL for a WebDAV access to this
+ *   <li>convert the path of the resource in the JCR tree to an URL for a WebDAV access of this
  *   resource.
  *   </li>
  * </ul>

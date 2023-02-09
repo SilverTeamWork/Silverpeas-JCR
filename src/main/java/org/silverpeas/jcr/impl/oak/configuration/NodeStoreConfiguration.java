@@ -81,10 +81,6 @@ public abstract class NodeStoreConfiguration {
     return Long.parseLong(value);
   }
 
-  protected String getString(@SuppressWarnings("SameParameterValue") String name) {
-    return properties.getProperty(name);
-  }
-
   protected String getString(String name, String defaultValue) {
     return properties.getProperty(name, defaultValue);
   }

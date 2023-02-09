@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * A randomizer of a date.
+ * A randomizer of a date to use in the tests.
  * @author mmoquillon
  */
 public final class DateRandom {

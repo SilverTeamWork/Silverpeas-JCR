@@ -25,8 +25,6 @@
 package org.silverpeas.jcr.security;
 
 import org.silverpeas.core.SilverpeasRuntimeException;
-import org.silverpeas.core.cache.model.SimpleCache;
-import org.silverpeas.core.cache.service.CacheServiceProvider;
 
 import javax.jcr.Credentials;
 import javax.security.auth.spi.LoginModule;
@@ -103,7 +101,7 @@ public class LoginModuleRegistry {
    * modules lifecycle is thread-scoped, meaning they are instantiated per thread, then they are
    * disposed once the thread terminated.
    * @param credentialsType a concrete type of {@link Credentials}.
-   * @return a list of {@link LoginModule} objects that can process the specified type of
+   * @return a set of {@link LoginModule} objects that can process the specified type of
    * credentials or an empty list if no one can take in charge this type of credentials.
    */
   public Set<SilverpeasJCRLoginModule> getLoginModule(

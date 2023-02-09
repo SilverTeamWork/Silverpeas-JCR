@@ -117,7 +117,7 @@ class OakRepositoryConfigurationTest {
     DocumentNodeStoreConfiguration nodeStoreConf =
         configuration.getDocumentNodeStoreConfiguration();
     // specific settings
-    assertThat(nodeStoreConf.getUri(), is("mongodb://mongo.silverpeas.net"));
+    assertThat(nodeStoreConf.getUri(), is("mongodb://localhost:27017"));
     assertThat(nodeStoreConf.getDocumentStoreType(), is(
         DocumentNodeStoreConfiguration.DocumentStoreType.MONGO));
     assertThat(nodeStoreConf.getDBName(), is("silverpeas"));

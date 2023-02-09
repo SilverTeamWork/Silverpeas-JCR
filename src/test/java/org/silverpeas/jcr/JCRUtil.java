@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.silverpeas.jcr.util.SilverpeasProperty.*;
 
 /**
- * Class with utility methods when handling JCR node properties and mixins.
+ * Class with utility methods for testing purpose when handling JCR node properties and mixins.
  * @author mmoquillon
  */
 final public class JCRUtil {

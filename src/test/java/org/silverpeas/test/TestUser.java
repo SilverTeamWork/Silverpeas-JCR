@@ -185,11 +185,6 @@ public class TestUser implements User {
   }
 
   @Override
-  public boolean isAccessSpaceManager() {
-    return isAccessAdmin() || getAccessLevel() == UserAccessLevel.SPACE_ADMINISTRATOR;
-  }
-
-  @Override
   public boolean isAccessPdcManager() {
     return isAccessAdmin() || getAccessLevel() == UserAccessLevel.PDC_MANAGER;
   }

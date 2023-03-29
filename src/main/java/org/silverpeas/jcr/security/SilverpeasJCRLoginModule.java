@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  * instance, one {@link LoginModule} to authenticate a user by his tuple login/domain/password and
  * another one to authenticate a user by his own API token. Once a user is authenticated, his
  * profile (as a {@link User} instance) is then set within a {@link SilverpeasUserPrincipal} object.
- * Because the content of the JCR is, in Silverpeas, is a sensitive data, anonymous authentication
+ * Because the content of the JCR is, in Silverpeas, a sensitive data, anonymous authentication
  * must be by default rejected. Only authentication of the system (or system user) can be accepted
  * and as such it should be automatically represented by the virtual Silverpeas system user in the
  * {@link SilverpeasUserPrincipal}.

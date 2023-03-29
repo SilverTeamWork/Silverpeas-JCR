@@ -73,7 +73,7 @@ public class JCRWebDavServlet extends SimpleWebdavServlet {
   protected void service(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     try {
-      super.service(request, response);
+      super.service(new HttpRequestFixer(request), response);
     } catch (Exception ex) {
       SilverLogger.getLogger(this).error(ex.getMessage(), ex);
       throw ex;

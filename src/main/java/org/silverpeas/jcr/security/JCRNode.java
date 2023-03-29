@@ -36,7 +36,7 @@ import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_OWNABLE_MIXIN;
 import static org.silverpeas.jcr.util.SilverpeasProperty.SLV_PROPERTY_OWNER;
 
 /**
- * A Node in the JCR. The JCR is structured like a tree in which content and administrative and
+ * A Node in the JCR. The JCR is structured like a tree in which content, and administrative and
  * management data are both stored. Each node in the JCR is represented by a {@link javax.jcr.Node}
  * object but some implementations of the JCR can provide another type to represent such a node in
  * order to ease the navigation over the tree or to facilitate the access the administrative and
